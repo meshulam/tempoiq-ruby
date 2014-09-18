@@ -1,12 +1,8 @@
 require 'tempoiq/client'
-require 'tempoiq/remoter/stubbed_remoter'
 
-require 'test/unit'
-
-class TestClient < Test::Unit::TestCase
+module ClientTest
   def test_initialize
     client = TempoIQ::Client.new("key", "secret", "backend.tempoiq.com")
-    
     assert_equal("key", client.key)
     assert_equal("secret", client.secret)
     assert_equal("backend.tempoiq.com", client.host)
@@ -14,7 +10,7 @@ class TestClient < Test::Unit::TestCase
   end
 
   def test_create_device
-    client = stubbed_client
+    client = get_client
     stubbed_body = {
       'key' => 'stubbed_key',
       'name' => 'stubbed_name',
@@ -29,11 +25,5 @@ class TestClient < Test::Unit::TestCase
     assert_equal('stubbed_name', device.name)
     assert_equal('stubbed_attributes', device.attributes)
     assert_equal([], device.sensors)
-  end
-    
-  private
-  
-  def stubbed_client
-    TempoIQ::Client.new("key", "secret", "backend.tempoiq.com", :remoter => TempoIQ::StubbedRemoter.new)
   end
 end

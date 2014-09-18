@@ -8,12 +8,13 @@ module TempoIQ
   class Client
     attr_reader :key, :secret, :host, :secure, :remoter
 
-    def initialize(key, secret, host, opts = {})
+    def initialize(key, secret, host, port = 443, opts = {})
       @key = key
       @secret = secret
       @host = host
-      @secure = opts[:secure] || true
-      @remoter = opts[:remoter] || LiveRemoter.new(key, secret, host, secure)
+      @port = port
+      @secure = opts.has_key?(:secure) ? opts[:secure] : true
+      @remoter = opts[:remoter] || LiveRemoter.new(key, secret, host, port, secure)
     end
     
     def create_device(key, name, attributes, sensors = [])

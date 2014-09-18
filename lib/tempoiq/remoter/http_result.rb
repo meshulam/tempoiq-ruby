@@ -1,4 +1,12 @@
 module TempoIQ
+  class HttpException < StandardError
+    attr_reader :response
+
+    def initialize(response)
+      @response = response
+    end
+  end
+
   class HttpResult
     attr_reader :code, :headers, :body
 
@@ -11,6 +19,8 @@ module TempoIQ
     def on_success(&block)
       if code / 100 == 2
         yield self
+      else
+        raise HttpException.new(self), "HTTP returned non-success response: #{code}"
       end
     end
   end
