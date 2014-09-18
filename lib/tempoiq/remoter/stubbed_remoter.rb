@@ -10,9 +10,9 @@ module TempoIQ
 
     def stub(http_verb, route, code, body, headers = {})
       @active_stubs[key_for(http_verb, route)] = {
-        body: body,
-        code: code,
-        headers: headers
+        :body => body,
+        :code => code,
+        :headers =>headers
       }
     end
 
