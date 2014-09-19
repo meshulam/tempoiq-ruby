@@ -1,7 +1,9 @@
 require 'json'
 require 'uri'
 
+require 'tempoiq/models/bulk_write'
 require 'tempoiq/models/cursor'
+require 'tempoiq/models/datapoint'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
 require 'tempoiq/models/selection'
@@ -56,6 +58,12 @@ module TempoIQ
         json = JSON.parse(result.body)
         Device.from_hash(json)
       end
+    end
+
+    def write_bulk(&block)
+      bulk = BulkWrite.new
+      yield bulk
+      remoter.post("/v2/write", JSON.dump(bulk.to_hash))
     end
   end
 end

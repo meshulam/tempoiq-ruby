@@ -88,6 +88,23 @@ module ClientTest
     assert_equal(device.key, found.to_a.first.key)
   end
 
+  def test_write_bulk
+    device = create_device
+    client = get_client
+    ts = Time.utc(2012, 1, 1)
+
+    device_key = device.key
+    sensor_key = device.sensors.first.key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    result = client.write_bulk do |write|
+      write.add(device_key, sensor_key, TempoIQ::DataPoint.new(ts, 1.23))
+    end
+
+    assert(result.success?)
+  end
+
   def test_delete_device
     device = create_device
     client = get_client
