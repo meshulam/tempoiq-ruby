@@ -6,6 +6,12 @@ require 'tempoiq/models/cursor'
 require 'tempoiq/models/datapoint'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
+require 'tempoiq/models/find'
+require 'tempoiq/models/pipeline'
+require 'tempoiq/models/query'
+require 'tempoiq/models/read'
+require 'tempoiq/models/row'
+require 'tempoiq/models/search'
 require 'tempoiq/models/selection'
 
 require 'tempoiq/remoter/live_remoter'
@@ -26,7 +32,7 @@ module TempoIQ
       @remoter = opts[:remoter] || LiveRemoter.new(key, secret, host, port, secure)
     end
     
-    def create_device(key, name, attributes, sensors = [])
+    def create_device(key, name, attributes, *sensors)
       device = Device.new(key, name, attributes, *sensors)
       remoter.post("/v2/devices", JSON.dump(device.to_hash)).on_success do |result|
         json = JSON.parse(result.body)
@@ -42,7 +48,11 @@ module TempoIQ
     end
 
     def list_devices(selection)
-      Cursor.new(Device, remoter, "/v2/devices", Selection.new("devices", selection))
+      query = Query.new(Search.new("devices", selection),
+                        Find.new,
+                        nil)
+
+      Cursor.new(Device, remoter, "/v2/devices", query)
     end
 
     def delete_device(device_key)
@@ -50,7 +60,11 @@ module TempoIQ
     end
 
     def delete_devices(selection)
-      remoter.delete("/v2/devices", JSON.dump(Selection.new("devices", selection).to_hash)).on_success do |result|
+      query = Query.new(Search.new("devices", selection),
+                        Find.new,
+                        nil)
+
+      remoter.delete("/v2/devices", JSON.dump(query.to_hash)).on_success do |result|
         json = JSON.parse(result.body)
         DeleteSummary.new(json['deleted'])
       end
@@ -80,6 +94,19 @@ module TempoIQ
         bulk.add(device_key, sensor_key, DataPoint.new(ts, value))
       end
       write_bulk(bulk)
+    end
+
+    def read(selection, start, stop, pipeline = nil, &block)
+      pipe = pipeline || Pipeline.new
+      if block_given?
+        yield pipe
+      end
+
+      query = Query.new(Search.new("devices", selection),
+                        Read.new(start, stop),
+                        pipe)
+
+      Cursor.new(Row, remoter, "/v2/read", query)      
     end
   end
 end

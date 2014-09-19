@@ -128,6 +128,52 @@ module ClientTest
     assert(result.success?)
   end
 
+  def test_read_with_pipeline
+    device = create_device
+    client = get_client
+    ts = Time.utc(2012, 1, 1, 1)
+    start = Time.utc(2012, 1, 1)
+    stop = Time.utc(2012, 1, 2)
+
+    device_key = device.key
+    sensor_key1 = device.sensors[0].key
+    sensor_key2 = device.sensors[1].key
+    
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1), sensor_key1 => 4.0, sensor_key2 => 2.0)
+    assert(write_result.success?)
+    write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 2), sensor_key1 => 4.0, sensor_key2 => 2.0)
+    assert(write_result.success?)
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    stubbed_read = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       "mean" => 3.0
+                     }
+                   }
+                 }
+                ]
+    }
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
+
+    rows = client.read(selection, start, stop) do |pipeline|
+      pipeline.rollup("1day", :sum, start)
+      pipeline.aggregate(:mean)
+    end.to_a
+
+    puts rows.inspect
+    assert_equal(1, rows.size)
+    assert_equal(6.0, rows[0].value(device.key, "mean"))
+  end
+
   def test_delete_device
     device = create_device
     client = get_client
@@ -145,17 +191,28 @@ module ClientTest
     stubbed_body = {
       'key' => 'device1',
       'name' => 'My Awesome Device',
-      'attributes' => {'attr1' => 'value1'},
-      'sensors' => [{
+      'attributes' => {'building' => '1234'},
+      'sensors' => [
+                    {
                       'key' => 'sensor1',
                       'name' => 'My Sensor',
                       'attributes' => {
                         'unit' => 'F'
+                      },
+                    },
+                    {
+                      'key' => 'sensor2',
+                      'name' => 'My Sensor2',
+                      'attributes' => {
+                        'unit' => 'C'
                       }
-                    }]
+                    }
+                   ]
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
-    client.create_device('device1', 'My Awesome Device', {'attr1' => 'value1'}, TempoIQ::Sensor.new('sensor1', 'My Sensor', 'unit' => 'F'))
+    client.create_device('device1', 'My Awesome Device', {'building' => '1234'},
+                         TempoIQ::Sensor.new('sensor1', 'My Sensor', 'unit' => 'F'),
+                         TempoIQ::Sensor.new('sensor2', 'My Sensor2', 'unit' => 'C'))
   end
 
   def delete_devices

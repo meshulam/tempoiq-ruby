@@ -8,15 +8,6 @@ module TempoIQ
     end
 
     def to_hash
-      {
-        "search" => {
-          "select" => select,
-          "filters" => filter
-        },
-        "find" => {
-          "quantifier" => "all"
-        }
-      }
     end
   end
 end
