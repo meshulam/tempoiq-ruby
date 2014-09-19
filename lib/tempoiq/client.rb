@@ -20,10 +20,11 @@ module TempoIQ
     end
     
     def create_device(key, name, attributes, sensors = [])
-      device = Device.new(key, name, attributes, sensors)
+      device = Device.new(key, name, attributes, *sensors)
       remoter.post("/v2/devices", JSON.dump(device.to_hash)).on_success do |result|
         json = JSON.parse(result.body)
-        Device.new(json['key'], json['name'], json['attributes'], json['sensors'])
+        Device.new(json['key'], json['name'], json['attributes'],
+                   *json['sensors'].map { |s| Sensor.new(s['key'], s['name'], s['attributes']) })
       end
     end
 

@@ -57,10 +57,16 @@ module ClientTest
       'key' => 'device1',
       'name' => 'My Awesome Device',
       'attributes' => {'attr1' => 'value1'},
-      'sensors' => []
+      'sensors' => [{
+                      'key' => 'sensor1',
+                      'name' => 'My Sensor',
+                      'attributes' => {
+                        'unit' => 'F'
+                      }
+                    }]
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
-    client.create_device('device1', 'My Awesome Device', 'attr1' => 'value1')
+    client.create_device('device1', 'My Awesome Device', {'attr1' => 'value1'}, TempoIQ::Sensor.new('sensor1', 'My Sensor', 'unit' => 'F'))
   end
 
   def delete_devices

@@ -1,8 +1,10 @@
+require 'tempoiq/models/sensor'
+
 module TempoIQ
   class Device
     attr_reader :key, :name, :attributes, :sensors
 
-    def initialize(key, name, attributes, sensors = [])
+    def initialize(key, name = "", attributes = {}, *sensors)
       @key = key
       @name = name
       @attributes = attributes
@@ -14,7 +16,7 @@ module TempoIQ
         'key' => key,
         'name' => name,
         'attributes' => attributes,
-        'sensor' => sensors
+        'sensors' => sensors.map(&:to_hash)
       }
     end
   end
