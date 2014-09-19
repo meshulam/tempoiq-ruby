@@ -8,7 +8,7 @@ module TempoIQ
       @active_stubs = {}
     end
 
-    def stub(http_verb, route, code, body, headers = {})
+    def stub(http_verb, route, code, body = nil, headers = {})
       @active_stubs[key_for(http_verb, route)] = {
         :body => body,
         :code => code,
@@ -16,11 +16,11 @@ module TempoIQ
       }
     end
 
-    def post(route, body, headers = {})
+    def post(route, body = nil, headers = {})
       return_stub(:post, route, body, headers)
     end
 
-    def delete(route, body, headers = {})
+    def delete(route, body = nil, headers = {})
       return_stub(:delete, route, body, headers)
     end
 

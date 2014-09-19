@@ -17,11 +17,15 @@ module TempoIQ
     end
 
     def on_success(&block)
-      if code / 100 == 2
+      if success?
         yield self
       else
         raise HttpException.new(self), "HTTP returned non-success response: #{code}, #{body}"
       end
+    end
+
+    def success?
+      code / 100 == 2
     end
   end
 end

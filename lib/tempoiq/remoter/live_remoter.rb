@@ -25,13 +25,13 @@ module TempoIQ
       end
     end
 
-    def post(route, body, headers = {})
+    def post(route, body = nil, headers = {})
       execute_http(:post, build_uri(route),
                    :headers => BASE_HEADERS,
                    :body => body)
     end
 
-    def delete(route, body, headers = {})
+    def delete(route, body = nil, headers = {})
       execute_http(:delete, build_uri(route),
                    :headers => BASE_HEADERS,
                    :body => body)

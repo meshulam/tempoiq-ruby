@@ -49,6 +49,16 @@ module ClientTest
     assert_equal(1, summary.deleted)
   end
 
+  def test_delete_device
+    device = create_device
+    client = get_client
+
+    client.remoter.stub(:delete, "/v2/devices/#{device.key}", 200)
+
+    result = client.delete_device(device.key)
+    assert(result.success?)
+  end
+
   private
 
   def create_device

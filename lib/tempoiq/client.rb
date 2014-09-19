@@ -28,6 +28,10 @@ module TempoIQ
       end
     end
 
+    def delete_device(device_key)
+      remoter.delete("/v2/devices/#{device_key}")
+    end
+
     def delete_devices(selection)
       remoter.delete("/v2/devices", JSON.dump(Selection.new("devices", selection).to_hash)).on_success do |result|
         json = JSON.parse(result.body)
