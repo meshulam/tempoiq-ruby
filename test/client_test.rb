@@ -75,6 +75,19 @@ module ClientTest
     assert_equal(device.key, found.key)
   end
 
+  def test_list_devices
+    device = create_device
+    client = get_client
+
+    stubbed_body = {
+      "data" => [device.to_hash]
+    }
+    client.remoter.stub(:get, "/v2/devices", 200, JSON.dump(stubbed_body))
+
+    found = client.list_devices(:devices => {:key => device.key})
+    assert_equal(device.key, found.to_a.first.key)
+  end
+
   def test_delete_device
     device = create_device
     client = get_client

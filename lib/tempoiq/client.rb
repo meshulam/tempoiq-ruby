@@ -1,6 +1,7 @@
 require 'json'
 require 'uri'
 
+require 'tempoiq/models/cursor'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
 require 'tempoiq/models/selection'
@@ -33,6 +34,10 @@ module TempoIQ
         json = JSON.parse(result.body)
         Device.from_hash(json)
       end
+    end
+
+    def list_devices(selection)
+      Cursor.new(Device, remoter, "/v2/devices", Selection.new("devices", selection))
     end
 
     def delete_device(device_key)
