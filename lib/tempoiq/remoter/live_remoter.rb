@@ -31,6 +31,12 @@ module TempoIQ
                    :body => body)
     end
 
+    def put(route, body = nil, headers = {})
+      execute_http(:put, build_uri(route),
+                   :headers => BASE_HEADERS,
+                   :body => body)
+    end
+
     def delete(route, body = nil, headers = {})
       execute_http(:delete, build_uri(route),
                    :headers => BASE_HEADERS,

@@ -1,6 +1,7 @@
 module TempoIQ
   class Sensor
-    attr_reader :key, :name, :attributes
+    attr_reader :key
+    attr_accessor :name, :attributes
 
     def initialize(key, name = "", attributes = {})
       @key = key

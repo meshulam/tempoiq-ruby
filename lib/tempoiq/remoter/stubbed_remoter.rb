@@ -24,6 +24,10 @@ module TempoIQ
       return_stub(:delete, route, body, headers)
     end
 
+    def put(route, body = nil, headers = {})
+      return_stub(:put, route, body, headers)
+    end
+
     private
 
     def key_for(http_verb, route)

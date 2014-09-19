@@ -37,7 +37,6 @@ module ClientTest
 
   def test_delete_devices
     device = create_device
-
     client = get_client
     stubbed_body = {
       'deleted' => 1
@@ -47,6 +46,21 @@ module ClientTest
 
     summary = client.delete_devices(:devices => {:key => device.key})
     assert_equal(1, summary.deleted)
+  end
+
+  def test_update_device
+    device = create_device
+    client = get_client
+
+    original_name = device.name
+    device.name = "Updated"
+    assert_not_equal(original_name, device.name)
+
+    stubbed_body = device.to_hash
+    client.remoter.stub(:put, "/v2/devices/#{device.key}", 200, JSON.dump(stubbed_body))
+
+    updated_device = client.update_device(device)
+    assert_equal(device.name, updated_device.name)
   end
 
   def test_delete_device
