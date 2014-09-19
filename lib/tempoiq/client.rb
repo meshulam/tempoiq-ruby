@@ -28,6 +28,13 @@ module TempoIQ
       end
     end
 
+    def get_device(device_key)
+      remoter.get("/v2/devices/#{URI.escape(device_key)}").on_success do |result|
+        json = JSON.parse(result.body)
+        Device.from_hash(json)
+      end
+    end
+
     def delete_device(device_key)
       remoter.delete("/v2/devices/#{URI.escape(device_key)}")
     end

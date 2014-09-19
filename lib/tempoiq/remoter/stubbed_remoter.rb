@@ -16,6 +16,10 @@ module TempoIQ
       }
     end
 
+    def get(route, body = nil, headers = {})
+      return_stub(:get, route, body, headers)
+    end
+
     def post(route, body = nil, headers = {})
       return_stub(:post, route, body, headers)
     end

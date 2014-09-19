@@ -25,6 +25,12 @@ module TempoIQ
       end
     end
 
+    def get(route, body = nil, headers = {})
+      execute_http(:get, build_uri(route),
+                   :headers => BASE_HEADERS,
+                   :body => body)
+    end
+
     def post(route, body = nil, headers = {})
       execute_http(:post, build_uri(route),
                    :headers => BASE_HEADERS,
