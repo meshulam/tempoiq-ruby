@@ -18,7 +18,7 @@ module TempoIQ
       @secure = secure
       @http_client = HTTPClient.new
       @http_client.transparent_gzip_decompression = true
-      @http_client.set_auth(host, key, secret)
+      @http_client.set_auth(nil, key, secret)
       if secure
         @http_client.ssl_config.clear_cert_store
         @http_client.ssl_config.set_trust_ca(TempoIQ::Constants::TRUSTED_CERT_FILE)
@@ -38,7 +38,7 @@ module TempoIQ
     private
 
     def execute_http(method, uri, *args)
-      response = @http_client.request(method, uri)
+      response = @http_client.request(method, uri, *args)
       HttpResult.new(response.code, response.headers, response.body)
     end
 

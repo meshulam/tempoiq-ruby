@@ -14,16 +14,16 @@ module ClientTest
     stubbed_body = {
       'key' => 'stubbed_key',
       'name' => 'stubbed_name',
-      'attributes' => 'stubbed_attributes',
+      'attributes' => {'attr1' => 'value1'},
       'sensors' => []
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
 
-    device = client.create_device('stubbed_key', 'stubbed_name', 'stubbed_attributes')
+    device = client.create_device('stubbed_key', 'stubbed_name', 'attr1' => 'value1')
 
     assert_equal('stubbed_key', device.key)
     assert_equal('stubbed_name', device.name)
-    assert_equal('stubbed_attributes', device.attributes)
+    assert_equal({'attr1' => 'value1'}, device.attributes)
     assert_equal([], device.sensors)
   end
 end

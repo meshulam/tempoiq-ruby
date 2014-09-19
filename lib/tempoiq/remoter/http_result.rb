@@ -20,7 +20,7 @@ module TempoIQ
       if code / 100 == 2
         yield self
       else
-        raise HttpException.new(self), "HTTP returned non-success response: #{code}"
+        raise HttpException.new(self), "HTTP returned non-success response: #{code}, #{body}"
       end
     end
   end
