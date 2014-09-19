@@ -105,6 +105,29 @@ module ClientTest
     assert(result.success?)
   end
 
+  def test_write_bulk_no_params
+    client = get_client
+
+    assert_raise(TempoIQ::ClientError) do
+      client.write_bulk
+    end
+  end
+
+  def test_write_device
+    device = create_device
+    client = get_client
+    ts = Time.utc(2012, 1, 1)
+
+    device_key = device.key
+    sensor_key = device.sensors.first.key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    result = client.write_device(device_key, ts, sensor_key => 1.23)
+
+    assert(result.success?)
+  end
+
   def test_delete_device
     device = create_device
     client = get_client

@@ -11,6 +11,9 @@ require 'tempoiq/models/selection'
 require 'tempoiq/remoter/live_remoter'
 
 module TempoIQ
+  class ClientError < StandardError
+  end
+
   class Client
     attr_reader :key, :secret, :host, :secure, :remoter
 
@@ -60,10 +63,23 @@ module TempoIQ
       end
     end
 
-    def write_bulk(&block)
-      bulk = BulkWrite.new
-      yield bulk
+    def write_bulk(bulk_write = nil, &block)
+      bulk = bulk_write || BulkWrite.new
+      if block_given?
+        yield bulk
+      elsif bulk_write.nil?
+        raise ClientError.new("You must pass either a bulk write object, or provide a block")
+      end
+
       remoter.post("/v2/write", JSON.dump(bulk.to_hash))
+    end
+
+    def write_device(device_key, ts, values)
+      bulk = BulkWrite.new
+      values.each do |sensor_key, value|
+        bulk.add(device_key, sensor_key, DataPoint.new(ts, value))
+      end
+      write_bulk(bulk)
     end
   end
 end
