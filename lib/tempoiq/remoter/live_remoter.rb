@@ -45,7 +45,7 @@ module TempoIQ
 
     def delete(route, body = nil, headers = {})
       execute_http(:delete, build_uri(route),
-                   :headers => BASE_HEADERS,
+                   :headers => BASE_HEADERS.merge(headers),
                    :body => body)
     end
 
