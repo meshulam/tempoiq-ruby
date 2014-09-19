@@ -1,6 +1,8 @@
 require 'json'
 
+require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
+require 'tempoiq/models/selection'
 
 require 'tempoiq/remoter/live_remoter'
 
@@ -22,6 +24,13 @@ module TempoIQ
       remoter.post("/v2/devices", JSON.dump(device.to_hash)).on_success do |result|
         json = JSON.parse(result.body)
         Device.new(json['key'], json['name'], json['attributes'], json['sensors'])
+      end
+    end
+
+    def delete_devices(selection)
+      remoter.delete("/v2/devices", JSON.dump(Selection.new("devices", selection).to_hash)).on_success do |result|
+        json = JSON.parse(result.body)
+        DeleteSummary.new(json['deleted'])
       end
     end
   end

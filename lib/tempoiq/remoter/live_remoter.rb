@@ -31,6 +31,12 @@ module TempoIQ
                    :body => body)
     end
 
+    def delete(route, body, headers = {})
+      execute_http(:delete, build_uri(route),
+                   :headers => BASE_HEADERS,
+                   :body => body)
+    end
+
     def stub(*args)
       # Live client. No op.
     end
