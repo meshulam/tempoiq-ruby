@@ -1,6 +1,6 @@
 require 'test/unit'
 
-require_relative './client_test'
+require File.join(File.dirname(__FILE__), "..", "client_test")
 
 require 'tempoiq/remoter/stubbed_remoter'
 
