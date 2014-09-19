@@ -173,6 +173,88 @@ module ClientTest
     assert_equal(6.0, rows[0].value(device.key, "mean"))
   end
 
+  def test_read_with_interpolation
+    device = create_device
+    client = get_client
+    start = Time.utc(2012, 1, 1, 1, 0, 0, 0)
+    stop = Time.utc(2012, 1, 1, 1, 0, 20, 0)
+
+    device_key = device.key
+    sensor_key = device.sensors[0].key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1, 0, 5, 0), sensor_key => 4.0)
+    assert(write_result.success?)
+    write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1, 0, 10, 0), sensor_key => 8.0)
+    assert(write_result.success?)
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    stubbed_read = {
+      "data" => [
+                 {
+                   "t" => Time.utc(2012, 1, 1, 1, 0, 5, 0),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 4.0
+                     }
+                   }
+                 },
+                 {
+                   "t" => Time.utc(2012, 1, 1, 1, 0, 6, 0),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 4.8
+                     }
+                   }
+                 },
+                 {
+                   "t" => Time.utc(2012, 1, 1, 1, 0, 7, 0),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 5.6
+                     }
+                   }
+                 },
+                 {
+                   "t" => Time.utc(2012, 1, 1, 1, 0, 8, 0),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 6.4
+                     }
+                   }
+                 },
+                 {
+                   "t" => Time.utc(2012, 1, 1, 1, 0, 9, 0),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 7.2
+                     }
+                   }
+                 },
+                 {
+                   "t" => Time.utc(2012, 1, 1, 1, 0, 10, 0),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 8.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
+
+    rows = client.read(selection, start, stop) do |pipeline|
+      pipeline.interpolate("PT1S", :linear, start, stop)
+    end.to_a
+
+    assert_equal(6, rows.size)
+  end
+
   def test_read_without_pipeline
     device = create_device
     client = get_client
