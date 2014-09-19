@@ -156,7 +156,7 @@ module ClientTest
                    "t" => ts.iso8601(3),
                    "data" => {
                      device_key => {
-                       "mean" => 3.0
+                       "mean" => 6.0
                      }
                    }
                  }
@@ -169,9 +169,50 @@ module ClientTest
       pipeline.aggregate(:mean)
     end.to_a
 
-    puts rows.inspect
     assert_equal(1, rows.size)
     assert_equal(6.0, rows[0].value(device.key, "mean"))
+  end
+
+  def test_read_without_pipeline
+    device = create_device
+    client = get_client
+    ts = Time.utc(2012, 1, 1, 1)
+    start = Time.utc(2012, 1, 1)
+    stop = Time.utc(2012, 1, 2)
+
+    device_key = device.key
+    sensor_key1 = device.sensors[0].key
+    sensor_key2 = device.sensors[1].key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    write_result = client.write_device(device_key, ts, sensor_key1 => 4.0, sensor_key2 => 2.0)
+    assert(write_result.success?)
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    stubbed_read = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
+
+    rows = client.read(selection, start, stop).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
   end
 
   def test_delete_device
