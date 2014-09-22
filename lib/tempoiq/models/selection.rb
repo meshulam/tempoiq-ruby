@@ -41,7 +41,7 @@ module TempoIQ
   #    # Select devices with key 'heatpump4549' or 'heatpump5789'
   #    {:devices => {:or => [{:key => 'heatpump4549'}, {:key => 'heatpump5789'}]}}
   #
-  #    # Select devices in buildings the Evanston region
+  #    # Select devices in buildings in the Evanston region
   #    {:devices => {:and => [{:attribute_key => 'building'}, {:attributes => {'region' => 'Evanston'}}]}}
   class Selection
     attr_reader :select, :filter

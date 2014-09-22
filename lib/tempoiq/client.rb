@@ -83,7 +83,10 @@ module TempoIQ
     # * +attributes+ (optional) [Hash] - A hash of device attributes. Keys / values are strings.
     # * +sensors+ (optional) [Array] - An array of Sensor objects to attach to the device
     #
-    # Returns the Device created or raises an HttpException on failure
+    # On success:
+    # - Returns the Device created
+    # On failure:
+    # - Raises HttpException
     #
     # ==== Example
     #
@@ -114,10 +117,11 @@ module TempoIQ
     #    device.sensors.each { |sensor| puts sensor.key }
     def get_device(device_key)
       result = remoter.get("/v2/devices/#{URI.escape(device_key)}")
-      if result.success?
+      case result.code
+      when HttpResult::OK
         json = JSON.parse(result.body)
         Device.from_hash(json)
-      elsif result.code == HttpResult::NOT_FOUND
+      when HttpResult::NOT_FOUND
         nil
       else
         raise HttpException.new(result)
@@ -132,6 +136,10 @@ module TempoIQ
     # - Return Cursor of Devices.
     # On failure:
     # - Raises HttpException after first Cursor iteration (lazy iteration)
+    #
+    # ==== Example
+    #    # Select devices in building in the Evanston region
+    #    client.list_devices(:devices => {:and => [{:attribute_key => 'building'}, {:attributes => {'region' => 'Evanston'}}]})
     def list_devices(selection)
       query = Query.new(Search.new("devices", selection),
                         Find.new,
@@ -140,8 +148,32 @@ module TempoIQ
       Cursor.new(Device, remoter, "/v2/devices", query)
     end
 
+    # Delete a device by key
+    #
+    # * +device_key+ [String] - The device key to delete by
+    #
+    # On succces:
+    # - Return true if Device found, false if Device not found
+    # On failure:
+    # - Raises HttpException
+    #
+    # === Example
+    #
+    #    # Delete device keyed 'heatpump4576'
+    #    deleted = client.delete_device('heatpump4576')
+    #    if deleted
+    #      puts "Device was deleted"
+    #    end
     def delete_device(device_key)
-      remoter.delete("/v2/devices/#{URI.escape(device_key)}")
+      result = remoter.delete("/v2/devices/#{URI.escape(device_key)}")
+      case result.code
+      when HttpResult::OK
+        true
+      when HttpResult::NOT_FOUND
+        false
+      else
+        raise HttpException.new(result)
+      end
     end
 
     def delete_devices(selection)
