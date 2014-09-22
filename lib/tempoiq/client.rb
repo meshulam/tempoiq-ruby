@@ -36,6 +36,10 @@ module TempoIQ
   #   - #write_bulk
   #   - #write_device
   #   - #read
+  #
+  # == Key Concepts:
+  #
+  # === Selection - A way to describe a grouping of related objects. Used primarily in Device / Sensor queries.
   class Client
     # Your TempoIQ backend key (String)
     attr_reader :key
@@ -120,6 +124,14 @@ module TempoIQ
       end
     end
 
+    # Search for a set of devices based on Selection criteria
+    #
+    # * +selection+ - Device search criteria. See Selection.
+    #
+    # On success:
+    # - Return Cursor of Devices.
+    # On failure:
+    # - Raises HttpException after first Cursor iteration (lazy iteration)
     def list_devices(selection)
       query = Query.new(Search.new("devices", selection),
                         Find.new,
