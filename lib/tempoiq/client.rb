@@ -37,7 +37,20 @@ module TempoIQ
   #   - #write_device
   #   - #read
   class Client
-    attr_reader :key, :secret, :host, :secure, :remoter
+    # Your TempoIQ backend key (String)
+    attr_reader :key
+
+    # TempoIQ backend secret (String)
+    attr_reader :secret
+
+    # TempoIQ backend host, found on your TempoIQ backend dashboard (String)
+    attr_reader :host
+
+    # Whether to use SSL or not. Defaults to true (Boolean, default: true)
+    attr_reader :secure
+
+    # Makes the backend calls (Remoter, default: LiveRemoter)
+    attr_reader :remoter
 
     # Create a TempoIQ API Client
     # 
@@ -49,7 +62,7 @@ module TempoIQ
     #
     # ==== Options
     # * +:secure+ [Boolean] - Whether to use SSL or not. Defaults to true
-    # * +:remoter+ [Remoter] - Makes the backend calls
+    # * +:remoter+ [Remoter] - Which backend to issue calls with. Defaults to LiveRemoter
     def initialize(key, secret, host, port = 443, opts = {})
       @key = key
       @secret = secret
@@ -59,7 +72,22 @@ module TempoIQ
       @remoter = opts[:remoter] || LiveRemoter.new(key, secret, host, port, secure)
     end
 
-    def create_device(key, name, attributes, *sensors)
+    # Create a Device in your TempoIQ backend
+    #
+    # * +key+ [String] - Device key
+    # * +name+ (optional) [String] - Human readable device name
+    # * +attributes+ (optional) [Hash] - A hash of device attributes. Keys / values are strings.
+    # * +sensors+ (optional) [Array] - An array of Sensor objects to attach to the device
+    #
+    # Returns the Device created or raises an HttpException on failure
+    #
+    # ==== Example
+    #
+    #    # Create a device keyed 'heatpump4789' with 2 attached sensors
+    #    device = client.create_device('heatpump4789', 'Basement Heat Pump',
+    #                                  'building' => '445 W Erie', 'model' => '75ZX',
+    #                                  TempoIQ::Sensor.new('temp-1'), TempoIQ::Sensor.new('pressure-1'))
+    def create_device(key, name = "", attributes = {}, *sensors)
       device = Device.new(key, name, attributes, *sensors)
       remoter.post("/v2/devices", JSON.dump(device.to_hash)).on_success do |result|
         json = JSON.parse(result.body)
@@ -67,10 +95,28 @@ module TempoIQ
       end
     end
 
+    # Fetch a device by key
+    #
+    # * +device_key+ [String] - The device key to fetch by
+    #
+    # On success:
+    # - Returns the Device found, nil when not found
+    # On failure:
+    # - Raises HttpException
+    #
+    # ==== Example
+    #    # Lookup the device keyed 'heatpump4789'
+    #    device = client.get_device('heatpump4789')
+    #    device.sensors.each { |sensor| puts sensor.key }
     def get_device(device_key)
-      remoter.get("/v2/devices/#{URI.escape(device_key)}").on_success do |result|
+      result = remoter.get("/v2/devices/#{URI.escape(device_key)}")
+      if result.success?
         json = JSON.parse(result.body)
         Device.from_hash(json)
+      elsif result.code == HttpResult::NOT_FOUND
+        nil
+      else
+        raise HttpException.new(result)
       end
     end
 

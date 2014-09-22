@@ -8,6 +8,13 @@ module TempoIQ
   end
 
   class HttpResult
+    OK = 200
+    BAD_REQUEST = 400
+    UNAUTHORIZED = 401
+    NOT_FOUND = 404
+    UNPROCESSABLE = 422
+    INTERNAL = 500
+
     attr_reader :code, :headers, :body
 
     def initialize(code, headers, body)

@@ -75,6 +75,15 @@ module ClientTest
     assert_equal(device.key, found.key)
   end
 
+  def test_get_device_not_found
+    client = get_client
+
+    client.remoter.stub(:get, "/v2/devices/not_found", 404)
+
+    not_found = client.get_device("not_found")
+    assert_nil(not_found)
+  end
+
   def test_list_devices
     device = create_device
     client = get_client
