@@ -1,10 +1,10 @@
 $:.push File.expand_path("../lib", __FILE__)
 
-require "tempoiq/version"
+require "tempoiq/constants"
 
 Gem::Specification.new do |s|
   s.name        = "tempoiq"
-  s.version     = TempoIQ::VERSION
+  s.version     = TempoIQ::Constants::VERSION
   s.authors     = ["TempoIQ, Inc."]
   s.email       = ["software@tempoiq.com"]
   s.homepage    = "http://tempoiq.com"

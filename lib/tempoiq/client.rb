@@ -20,9 +20,36 @@ module TempoIQ
   class ClientError < StandardError
   end
 
+  # TempoIQ::Client is the main interface to your TempoIQ backend.
+  # 
+  # The client is broken down into two main sections:
+  #
+  # [Device Provisioning]
+  #   - #create_device
+  #   - #update_device
+  #   - #delete_device
+  #   - #delete_devices
+  #   - #get_device
+  #   - #list_devices
+  #
+  # [DataPoint Reading / Writing]
+  #   - #write_bulk
+  #   - #write_device
+  #   - #read
   class Client
     attr_reader :key, :secret, :host, :secure, :remoter
 
+    # Create a TempoIQ API Client
+    # 
+    # * +key+ [String] - Your TempoIQ backend key
+    # * +secret+ [String] - TempoIQ backend secret
+    # * +host+ [String] - TempoIQ backend host, found on your TempoIQ backend dashboard
+    # * +port+ (optional) [Integer] - TempoIQ backend port
+    # * +opts+ (optional) [Hash] - Optional client parameters
+    #
+    # ==== Options
+    # * +:secure+ [Boolean] - Whether to use SSL or not. Defaults to true
+    # * +:remoter+ [Remoter] - Makes the backend calls
     def initialize(key, secret, host, port = 443, opts = {})
       @key = key
       @secret = secret
@@ -31,7 +58,7 @@ module TempoIQ
       @secure = opts.has_key?(:secure) ? opts[:secure] : true
       @remoter = opts[:remoter] || LiveRemoter.new(key, secret, host, port, secure)
     end
-    
+
     def create_device(key, name, attributes, *sensors)
       device = Device.new(key, name, attributes, *sensors)
       remoter.post("/v2/devices", JSON.dump(device.to_hash)).on_success do |result|
