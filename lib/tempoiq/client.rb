@@ -157,8 +157,7 @@ module TempoIQ
     # On failure:
     # - Raises HttpException
     #
-    # === Example
-    #
+    # ==== Example
     #    # Delete device keyed 'heatpump4576'
     #    deleted = client.delete_device('heatpump4576')
     #    if deleted
@@ -176,6 +175,19 @@ module TempoIQ
       end
     end
 
+    # Delete a set of devices by Selection criteria
+    #
+    # * +selection+ - Device search criteria. See Selection.
+    #
+    # On success:
+    # - Return a DeleteSummary object
+    # On failure:
+    # - Raises HttpException
+    #
+    # ==== Example
+    #    # Delete all devices in building 'b4346'
+    #    summary = client.delete_devices(:devices => {:attributes => {'building' => 'b4346'}})
+    #    puts "Number of devices deleted: #{summary.deleted}"
     def delete_devices(selection)
       query = Query.new(Search.new("devices", selection),
                         Find.new,
@@ -187,6 +199,23 @@ module TempoIQ
       end
     end
 
+    # Update a device
+    #
+    # * +device+ - Updated Device object.
+    #
+    # On success:
+    # - Return updated Device on found, nil on Device not found
+    # On failure:
+    # - Raises HttpException
+    #
+    # ==== Example
+    #
+    #    # Get a device and update it's name
+    #    device = client.get_device('building1234')
+    #    if device
+    #      device.name = "Updated name"
+    #      client.update_device(device)
+    #    end
     def update_device(device)
       remoter.put("/v2/devices/#{URI.escape(device.key)}", JSON.dump(device.to_hash)).on_success do |result|
         json = JSON.parse(result.body)
