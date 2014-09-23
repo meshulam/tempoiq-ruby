@@ -6,7 +6,13 @@ module TempoIQ
   #   - device_key
   #     - sensor_key => value
   class Row
-    attr_reader :ts, :values
+    # Timestamp of the row
+    attr_reader :ts
+
+    # Data at the timestamp [Hash]
+    #
+    # Looks like: {"device1" => {"sensor1" => 1.23, "sensor2" => 2.34}}
+    attr_reader :values
     
     def initialize(ts, values)
       @ts = ts
