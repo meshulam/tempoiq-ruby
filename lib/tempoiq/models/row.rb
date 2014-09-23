@@ -6,11 +6,11 @@ module TempoIQ
   #   - device_key
   #     - sensor_key => value
   class Row
-    attr_reader :ts, :data
+    attr_reader :ts, :values
     
-    def initialize(ts, data)
+    def initialize(ts, values)
       @ts = ts
-      @data = data
+      @values = values
     end
     
     def self.from_hash(hash)
@@ -20,7 +20,7 @@ module TempoIQ
     # Convenience method to select a single (device, sensor)
     # value from within the row.
     def value(device_key, key)
-      @data[device_key][key]
+      @values[device_key][key]
     end
   end
 end
