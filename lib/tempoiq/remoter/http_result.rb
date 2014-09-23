@@ -1,5 +1,8 @@
 module TempoIQ
+  # Thrown from client calls where unexpected response codes are returned from
+  # the backend.
   class HttpException < StandardError
+    # Underlying response object, useful for debugging unexpected failures.
     attr_reader :response
 
     def initialize(response)

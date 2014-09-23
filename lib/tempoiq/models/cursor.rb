@@ -2,6 +2,13 @@ require 'enumerator'
 require 'json'
 
 module TempoIQ
+  # Cursor is an abstraction over a sequence / stream of objects. It
+  # uses lazy iteration to transparently fetch segments of data from
+  # the server.
+  #
+  # It implements the Enumerable interface, which means convenience functions
+  # such as Enumerable#to_a are available if you know you're working with a 
+  # small enough segment of data that can reasonably fit in memory.
   class Cursor
     attr_reader :remoter, :route, :query, :segment_key
 
