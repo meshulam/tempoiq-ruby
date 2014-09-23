@@ -278,8 +278,8 @@ module TempoIQ
     # * +values+ [Hash] - Hash from sensor_key => value
     #
     # On success:
-    # - Return MultiStatus
-    # On total failure:
+    # - Return true
+    # On failure:
     # - Raises HttpException
     #
     # ==== Example
@@ -294,7 +294,7 @@ module TempoIQ
       values.each do |sensor_key, value|
         bulk.add(device_key, sensor_key, DataPoint.new(ts, value))
       end
-      write_bulk(bulk)
+      write_bulk(bulk).success?
     end
 
     # Read from a set of Devices / Sensors, with an optional functional pipeline

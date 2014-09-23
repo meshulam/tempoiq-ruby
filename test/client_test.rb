@@ -134,7 +134,10 @@ module ClientTest
     stubbed_body = {"device1" => {"success" => false, "message" => "error writing to storage: FERR_NO_SENSOR: No sensor with key found in device."}}
     client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
-    status = client.write_device(device_key, ts, sensor_key => 1.23, "not_here" => 2.34)
+    status = client.write_bulk do |write|
+      write.add(device_key, sensor_key, TempoIQ::DataPoint.new(ts, 1.23))
+      write.add(device_key, "not_here", TempoIQ::DataPoint.new(ts, 2.34))
+    end
 
     assert(!status.success?)
     assert(status.partial_success?)
@@ -151,10 +154,9 @@ module ClientTest
 
     client.remoter.stub(:post, "/v2/write", 200)
 
-    status = client.write_device(device_key, ts, sensor_key => 1.23)
+    written = client.write_device(device_key, ts, sensor_key => 1.23)
 
-    assert(status.success?)
-    assert(!status.partial_success?)
+    assert_equal(true, written)
   end
 
   def test_read_with_pipeline
@@ -171,9 +173,9 @@ module ClientTest
     client.remoter.stub(:post, "/v2/write", 200)
 
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1), sensor_key1 => 4.0, sensor_key2 => 2.0)
-    assert(write_result.success?)
+    assert_equal(true, write_result)
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 2), sensor_key1 => 4.0, sensor_key2 => 2.0)
-    assert(write_result.success?)
+    assert_equal(true, write_result)
 
     selection = {
       :devices => {:key => device_key}
@@ -214,9 +216,9 @@ module ClientTest
     client.remoter.stub(:post, "/v2/write", 200)
 
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1, 0, 5, 0), sensor_key => 4.0)
-    assert(write_result.success?)
+    assert_equal(true, write_result)
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1, 0, 10, 0), sensor_key => 8.0)
-    assert(write_result.success?)
+    assert_equal(true, write_result)
 
     selection = {
       :devices => {:key => device_key}
@@ -298,7 +300,7 @@ module ClientTest
     client.remoter.stub(:post, "/v2/write", 200)
 
     write_result = client.write_device(device_key, ts, sensor_key1 => 4.0, sensor_key2 => 2.0)
-    assert(write_result.success?)
+    assert_equal(true, write_result)
 
     selection = {
       :devices => {:key => device_key}
