@@ -7,6 +7,7 @@ require 'tempoiq/models/datapoint'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
 require 'tempoiq/models/find'
+require 'tempoiq/models/multi_status'
 require 'tempoiq/models/pipeline'
 require 'tempoiq/models/query'
 require 'tempoiq/models/read'
@@ -246,8 +247,8 @@ module TempoIQ
     #    if status.succes?
     #      puts "All datapoints written successfully"
     #    elsif status.partial_success?
-    #      status.failures.each do |failure|
-    #        puts "Failed to write: #{failure}"
+    #      status.failures.each do |key, message|
+    #        puts "Failed to write #{key}, message: #{message}"
     #      end
     #    end
     def write_bulk(bulk_write = nil, &block)
@@ -258,7 +259,15 @@ module TempoIQ
         raise ClientError.new("You must pass either a bulk write object, or provide a block")
       end
 
-      remoter.post("/v2/write", JSON.dump(bulk.to_hash))
+      result = remoter.post("/v2/write", JSON.dump(bulk.to_hash))
+      if result.code == HttpResult::OK
+        MultiStatus.new
+      elsif result.code == HttpResult::MULTI
+        json = JSON.parse(result.body)
+        MultiStatus.new(json)
+      else
+        raise HttpException.new(result)
+      end
     end
 
     # Write to multiple sensors in a single device, at the same timestamp. Useful for
@@ -270,8 +279,6 @@ module TempoIQ
     #
     # On success:
     # - Return MultiStatus
-    # On partial failure:
-    # - Return MultiStatus
     # On total failure:
     # - Raises HttpException
     #
@@ -281,10 +288,6 @@ module TempoIQ
     # status = client.write_device('device1', ts, 'temp1' => 4.0, 'temp2' => 4.2)
     # if status.succes?
     #   puts "All datapoints written successfully"
-    # elsif status.partial_success?
-    #   status.failures.each do |failure|
-    #     puts "Failed to write #{failure}"
-    #   end
     # end
     def write_device(device_key, ts, values)
       bulk = BulkWrite.new

@@ -107,11 +107,12 @@ module ClientTest
 
     client.remoter.stub(:post, "/v2/write", 200)
 
-    result = client.write_bulk do |write|
+    status = client.write_bulk do |write|
       write.add(device_key, sensor_key, TempoIQ::DataPoint.new(ts, 1.23))
     end
 
-    assert(result.success?)
+    assert(status.success?)
+    assert(!status.partial_success?)
   end
 
   def test_write_bulk_no_params
@@ -120,6 +121,24 @@ module ClientTest
     assert_raise(TempoIQ::ClientError) do
       client.write_bulk
     end
+  end
+
+  def test_write_with_partial_failure
+    device = create_device
+    client = get_client
+    ts = Time.utc(2012, 1, 1)
+
+    device_key = device.key
+    sensor_key = device.sensors.first.key
+
+    stubbed_body = {"device1" => {"success" => false, "message" => "error writing to storage: FERR_NO_SENSOR: No sensor with key found in device."}}
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
+
+    status = client.write_device(device_key, ts, sensor_key => 1.23, "not_here" => 2.34)
+
+    assert(!status.success?)
+    assert(status.partial_success?)
+    assert_equal(1, status.failures.size)
   end
 
   def test_write_device
@@ -132,9 +151,10 @@ module ClientTest
 
     client.remoter.stub(:post, "/v2/write", 200)
 
-    result = client.write_device(device_key, ts, sensor_key => 1.23)
+    status = client.write_device(device_key, ts, sensor_key => 1.23)
 
-    assert(result.success?)
+    assert(status.success?)
+    assert(!status.partial_success?)
   end
 
   def test_read_with_pipeline
