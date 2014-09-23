@@ -284,11 +284,11 @@ module TempoIQ
     #
     # ==== Example
     #
-    # ts = Time.now
-    # status = client.write_device('device1', ts, 'temp1' => 4.0, 'temp2' => 4.2)
-    # if status.succes?
-    #   puts "All datapoints written successfully"
-    # end
+    #    ts = Time.now
+    #    status = client.write_device('device1', ts, 'temp1' => 4.0, 'temp2' => 4.2)
+    #    if status.succes?
+    #      puts "All datapoints written successfully"
+    #    end
     def write_device(device_key, ts, values)
       bulk = BulkWrite.new
       values.each do |sensor_key, value|
