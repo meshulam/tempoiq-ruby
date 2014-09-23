@@ -247,8 +247,8 @@ module TempoIQ
     #    if status.succes?
     #      puts "All datapoints written successfully"
     #    elsif status.partial_success?
-    #      status.failures.each do |key, message|
-    #        puts "Failed to write #{key}, message: #{message}"
+    #      status.failures.each do |device_key, message|
+    #        puts "Failed to write #{device_key}, message: #{message}"
     #      end
     #    end
     def write_bulk(bulk_write = nil, &block)
