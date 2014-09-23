@@ -223,6 +223,33 @@ module TempoIQ
       end
     end
 
+    # Write multiple datapoints to multiple device sensors. This function
+    # is generally useful for importing data to many devices at once.
+    #
+    # * +bulk_write+ - The write request to send to the backend. Yielded to the block.
+    #
+    # On success:
+    # - Returns MultiStatus
+    # On partial success:
+    # - Returns MultiStatus
+    # On failure:
+    # - Raises HttpException
+    #
+    # ==== Example
+    #    # Write to 'device1' and 'device2' with different sensor readings
+    #    status = client.write_bulk do |write|
+    #      ts = Time.now
+    #      write.add('device1', 'temp1', TempoIQ::DataPoint.new(ts, 1.23))
+    #      write.add('device2', 'temp1', TempoIQ::DataPoint.new(ts, 2.34))
+    #    end
+    #
+    #    if status.succes?
+    #      puts "All datapoints written successfully"
+    #    elsif status.partial_success?
+    #      status.failures.each do |failure|
+    #        puts "Failed to write #{failure}"
+    #      end
+    #    end
     def write_bulk(bulk_write = nil, &block)
       bulk = bulk_write || BulkWrite.new
       if block_given?
@@ -234,6 +261,31 @@ module TempoIQ
       remoter.post("/v2/write", JSON.dump(bulk.to_hash))
     end
 
+    # Write to multiple sensors in a single device, at the same timestamp. Useful for
+    # 'sampling' from all the sensors on a device and ensuring that the timestamps align.
+    #
+    # * +device_key+ [String] - Device key to write to
+    # * +ts+ [Time] - Timestamp that datapoints will be written at
+    # * +values+ [Hash] - Hash from sensor_key => value
+    #
+    # On success:
+    # - Return MultiStatus
+    # On partial failure:
+    # - Return MultiStatus
+    # On total failure:
+    # - Raises HttpException
+    #
+    # ==== Example
+    #
+    # ts = Time.now
+    # status = client.write_device('device1', ts, 'temp1' => 4.0, 'temp2' => 4.2)
+    # if status.succes?
+    #   puts "All datapoints written successfully"
+    # elsif status.partial_success?
+    #   status.failures.each do |failure|
+    #     puts "Failed to write #{failure}"
+    #   end
+    # end
     def write_device(device_key, ts, values)
       bulk = BulkWrite.new
       values.each do |sensor_key, value|
@@ -242,6 +294,39 @@ module TempoIQ
       write_bulk(bulk)
     end
 
+    # Read from a set of Devices / Sensors, with an optional functional pipeline
+    # to transform the values.
+    #
+    # * +selection+ [Selection] - Device selection, describes which Devices / Sensors we should operate on
+    # * +start+ [Time] - Read start interval
+    # * +stop+ [Time] - Read stop interval
+    # * +pipeline+ [Pipeline] - Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
+    #
+    # On success:
+    # - Return a Cursor of Row objects.
+    # On failure:
+    # - Raise an HttpException
+    #
+    # ==== Examples
+    #    # Read raw datapoints from Device 'bulding4567' Sensor 'temp1'
+    #    start = Time.utc(2014, 1, 1)
+    #    stop = Time.utc(2014, 1, 2)
+    #    rows = client.read({:devices => {:key => 'building4567'}, :sensors => {:key => 'temp1'}}, start, stop)
+    #    rows.each do |row|
+    #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
+    #    end
+    #
+    #    # Find the daily mean temperature in Device 'building4567' across sensors 'temp1' and 'temp2'
+    #    start = Time.utc(2014, 1, 1)
+    #    stop = Time.utc(2014, 2, 2)
+    #    rows = client.read({:devices => {:key => 'building4567'}, :sensors => {:key => 'temp1'}}, start, stop) do |pipeline|
+    #      pipeline.rollup("1day", :mean, start)
+    #      pipeline.aggregate(:mean)
+    #    end
+    #
+    #    rows.each do |row|
+    #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
+    #    end
     def read(selection, start, stop, pipeline = nil, &block)
       pipe = pipeline || Pipeline.new
       if block_given?
