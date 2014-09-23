@@ -286,6 +286,46 @@ module ClientTest
     assert_equal(6, rows.size)
   end
 
+  def test_read_device_sensor
+    device = create_device
+    client = get_client
+    ts = Time.utc(2012, 1, 1, 1)
+    start = Time.utc(2012, 1, 1)
+    stop = Time.utc(2012, 1, 2)
+
+    device_key = device.key
+    sensor_key = device.sensors[0].key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    write_result = client.write_device(device_key, ts, sensor_key => 4.0)
+    assert_equal(true, write_result)
+
+    selection = {
+      :devices => {:key => device_key},
+      :sensors => {:key => sensor_key}
+    }
+
+    stubbed_read = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key => 4.0
+                     }
+                   }
+                 }
+                ]
+    }
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
+
+    points = client.read_device_sensor(device_key, sensor_key, start, stop).to_a
+
+    assert_equal(1, points.size)
+    assert_equal(4.0, points[0].value)
+  end
+
   def test_read_without_pipeline
     device = create_device
     client = get_client

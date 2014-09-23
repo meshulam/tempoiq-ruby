@@ -303,7 +303,7 @@ module TempoIQ
     # * +selection+ [Selection] - Device selection, describes which Devices / Sensors we should operate on
     # * +start+ [Time] - Read start interval
     # * +stop+ [Time] - Read stop interval
-    # * +pipeline+ [Pipeline] - Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
+    # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
     #
     # On success:
     # - Return a Cursor of Row objects.
@@ -341,6 +341,35 @@ module TempoIQ
                         pipe)
 
       Cursor.new(Row, remoter, "/v2/read", query)      
+    end
+
+    # Convenience function to read from a single Device, and single Sensor
+    #
+    # + *device_key* [String] - Device key to read from
+    # + *sensor_key* [String] - Sensor key to read from
+    # * +start+ [Time] - Read start interval
+    # * +stop+ [Time] - Read stop interval
+    # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
+    #
+    # On success:
+    # - Return a Cursor of DataPoint objects.
+    # On failure:
+    # - Raise an HttpException
+    #
+    # ==== Example
+    #     # Read from 'device1', 'temp1'
+    #     start = Time.utc(2014, 1, 1)
+    #     stop = Time.utc(2014, 1, 2)
+    #     datapoints = client.read_device_sensor('device1', 'temp1', start, stop)
+    #     datapoints.each do |point|
+    #       puts "DataPoint ts: #{point.ts}, value: #{point.value}"
+    #     end
+    def read_device_sensor(device_key, sensor_key, start, stop, pipeline = nil, &block)
+      selection = {:devices => {:key => device_key}, :sensors => {:key => sensor_key}}
+      read(selection, start, stop, pipeline).map do |row|
+        sub_key = row.values.map { |device_key, sensors| sensors.keys.first }.first || sensor_key
+        DataPoint.new(row.ts, row.value(device_key, sub_key))
+      end
     end
   end
 end
