@@ -1,7 +1,15 @@
 module TempoIQ
+  # The container for a stream of time series DataPoints.
   class Sensor
+    # The sensor primary key [String]
     attr_reader :key
-    attr_accessor :name, :attributes
+
+    # Human readable name of the sensor [String] EG - "Thermometer 1"
+    attr_accessor :name
+
+    # Indexable attributes. Useful for grouping related sensors.
+    # EG - {'unit' => 'F', 'model' => 'FHZ343'}
+    attr_accessor :attributes
 
     def initialize(key, name = "", attributes = {})
       @key = key

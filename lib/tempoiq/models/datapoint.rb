@@ -1,8 +1,13 @@
 require 'time'
 
 module TempoIQ
+  # The core type of TempoIQ. Holds a timestamp and value.
   class DataPoint
-    attr_reader :ts, :value
+    # The timestamp of the datapoint [Time]
+    attr_reader :ts
+
+    # The value of the datapoint [Fixnum / Float]
+    attr_reader :value
 
     def initialize(ts, value)
       @ts = ts

@@ -1,9 +1,20 @@
 require 'tempoiq/models/sensor'
 
 module TempoIQ
+  # The top level container for a group of sensors.
   class Device
+    # The primary key of the device [String]
     attr_reader :key
-    attr_accessor :name, :attributes, :sensors
+
+    # Human readable name of the device [String] EG - "My Device"
+    attr_accessor :name
+
+    # Indexable attributes. Useful for grouping related Devices.
+    # EG - {'location' => '445-w-Erie', 'model' => 'TX75', 'region' => 'Southwest'}
+    attr_accessor :attributes
+
+    # Sensors attached to the device [Array] (Sensor)
+    attr_accessor :sensors
 
     def initialize(key, name = "", attributes = {}, *sensors)
       @key = key
