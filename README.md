@@ -9,7 +9,15 @@ gem install tempoiq-0.0.1.gem
 
 ## Quickstart
 
-Quickstart instructions here.
+```ruby
+require 'tempoiq'
+
+client = TempoIQ::Client.new('key', 'secret', 'myco.backend.tempoiq.com')
+client.create_device('device1')
+client.list_devices.to_a
+```
+
+For more example usage, see the Client ruby docs.
 
 ## Test Suite
 

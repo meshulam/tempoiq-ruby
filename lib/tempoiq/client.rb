@@ -141,7 +141,7 @@ module TempoIQ
     # ==== Example
     #    # Select devices in building in the Evanston region
     #    client.list_devices(:devices => {:and => [{:attribute_key => 'building'}, {:attributes => {'region' => 'Evanston'}}]})
-    def list_devices(selection)
+    def list_devices(selection = {:devices => "all"})
       query = Query.new(Search.new("devices", selection),
                         Find.new,
                         nil)
