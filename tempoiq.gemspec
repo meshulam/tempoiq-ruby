@@ -16,6 +16,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency "json"
-  s.add_runtime_dependency "httpclient"
+  s.add_runtime_dependency "httpclient", ">= 2.4.0"
   s.add_runtime_dependency "httpclient_link_header"
 end

@@ -22,6 +22,7 @@ module TempoIQ
       if secure
         @http_client.ssl_config.clear_cert_store
         @http_client.ssl_config.set_trust_ca(TempoIQ::Constants::TRUSTED_CERT_FILE)
+        @http_client.ssl_config.ssl_version = :SSLv23
       end
     end
 
