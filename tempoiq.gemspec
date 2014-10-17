@@ -11,10 +11,11 @@ Gem::Specification.new do |s|
   s.summary     = %q{TempoIQ http client}
   s.description = %q{TempoIQ http client}
 
-  s.files         = `git ls-files`.split("\n")
+  s.files         = Dir['lib/**/*'] + Dir['test/**/*']
+  s.files         += Dir['Gemfile'] + Dir['Rakefile'] + Dir['README.md']
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency "json"
-  s.add_runtime_dependency "httpclient"
+  s.add_runtime_dependency "httpclient", ">= 2.4.0"
   s.add_runtime_dependency "httpclient_link_header"
 end
