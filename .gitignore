@@ -1,4 +1,3 @@
 html
 *.gem
 Gemfile.lock
-integration-credentials.yml
