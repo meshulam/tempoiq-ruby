@@ -360,15 +360,14 @@ module TempoIQ
     #    rows.each do |row|
     #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
     #    end
-    def latest(selection, pipeline = nil, &block)
-      pipe = pipeline || Pipeline.new
+    def latest(selection, pipeline = Pipeline.new, &block)
       if block_given?
-        yield pipe
+        yield pipeline
       end
 
       query = Query.new(Search.new("devices", selection),
                         Single.new(false),
-                        pipe)
+                        pipeline)
 
       Cursor.new(Row, remoter, "/v2/single", query)
     end
