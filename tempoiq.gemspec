@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
   s.files         += Dir['Gemfile'] + Dir['Rakefile'] + Dir['README.md']
   s.require_paths = ["lib"]
 
+  s.add_development_dependency "test-unit"
   s.add_runtime_dependency "json"
   s.add_runtime_dependency "httpclient", ">= 2.4.0"
   s.add_runtime_dependency "httpclient_link_header"

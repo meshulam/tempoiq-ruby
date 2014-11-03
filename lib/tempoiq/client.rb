@@ -6,6 +6,7 @@ require 'tempoiq/models/cursor'
 require 'tempoiq/models/datapoint'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
+require 'tempoiq/models/delete'
 require 'tempoiq/models/find'
 require 'tempoiq/models/multi_status'
 require 'tempoiq/models/pipeline'
@@ -14,7 +15,7 @@ require 'tempoiq/models/read'
 require 'tempoiq/models/row'
 require 'tempoiq/models/search'
 require 'tempoiq/models/selection'
-
+require 'tempoiq/models/single'
 require 'tempoiq/remoter/live_remoter'
 
 module TempoIQ
@@ -145,7 +146,6 @@ module TempoIQ
       query = Query.new(Search.new("devices", selection),
                         Find.new,
                         nil)
-
       Cursor.new(Device, remoter, "/v2/devices", query)
     end
 
@@ -306,7 +306,7 @@ module TempoIQ
     # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
     #
     # On success:
-    # - Return a Cursor of Row objects.
+    # - Return a Cursor of Row objects
     # On failure:
     # - Raise an HttpException
     #
@@ -340,7 +340,67 @@ module TempoIQ
                         Read.new(start, stop),
                         pipe)
 
-      Cursor.new(Row, remoter, "/v2/read", query)      
+      Cursor.new(Row, remoter, "/v2/read", query)
+    end
+
+    # Read the latest value from a set of Devices / Sensors, with an optional functional pipeline
+    # to transform the values.
+    #
+    # * +selection+ [Selection] - Device selection, describes which Devices / Sensors we should operate on
+    # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
+    #
+    # On success:
+    # - Return a Cursor of Row objects with only one Row inside
+    # On failure:
+    # - Raise an HttpException
+    #
+    # ==== Example
+    #    # Find the latest DataPoints from Device 'bulding4567' Sensor 'temp1'
+    #    rows = client.latest({:devices => {:key => 'building4567'}, :sensors => {:key => 'temp1'}})
+    #    rows.each do |row|
+    #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
+    #    end
+    def latest(selection, pipeline = nil, &block)
+      pipe = pipeline || Pipeline.new
+      if block_given?
+        yield pipe
+      end
+
+      query = Query.new(Search.new("devices", selection),
+                        Single.new(false),
+                        pipe)
+
+      Cursor.new(Row, remoter, "/v2/single", query)
+    end
+
+    # Delete datapoints by device and sensor key, start and stop date
+    #
+    # + *device_key* [String] - Device key to read from
+    # + *sensor_key* [String] - Sensor key to read from
+    # * +start+ [Time] - Read start interval
+    # * +stop+ [Time] - Read stop interval
+    #
+    # On success:
+    # _ Return a DeleteSummary describing the number of points deleted
+    # On failure:
+    # - Raise an HttpException
+    #
+    # ==== Example
+    #     # Delete data from 'device1', 'temp' from 2013
+    #     start = Time.utc(2013, 1, 1)
+    #     stop = Time.utc(2013, 12, 31)
+    #     summary = client.delete_datapoints('device1', 'temp', start, stop)
+    #     puts "Deleted #{summary.deleted} points"
+    def delete_datapoints(device_key, sensor_key, start, stop)
+      delete_range = {:start => start.iso8601(3), :stop => stop.iso8601(3)}
+      result = remoter.delete("/v2/devices/#{URI.escape(device_key)}/sensors/#{URI.escape(sensor_key)}/datapoints", JSON.dump(delete_range))
+      case result.code
+      when HttpResult::OK
+        json = JSON.parse(result.body)
+        DeleteSummary.new(json['deleted'])
+      else
+        raise HttpException.new(result)
+      end
     end
 
     # Convenience function to read from a single Device, and single Sensor
