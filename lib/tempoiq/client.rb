@@ -1,3 +1,4 @@
+require 'rubygems'
 require 'json'
 require 'uri'
 
@@ -6,7 +7,6 @@ require 'tempoiq/models/cursor'
 require 'tempoiq/models/datapoint'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
-require 'tempoiq/models/delete'
 require 'tempoiq/models/find'
 require 'tempoiq/models/multi_status'
 require 'tempoiq/models/pipeline'
