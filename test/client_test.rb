@@ -378,6 +378,107 @@ module ClientTest
     assert_equal(true, deleted)
   end
 
+  def test_latest
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts = Time.utc(2012, 1, 1)
+
+    stubbed_single = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_device(device_key, ts, sensor_key1 => 4.0)
+    client.write_device(device_key, ts, sensor_key2 => 2.0)
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    rows = client.latest(selection).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_delete_points
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts = Time.utc(2012, 1, 1)
+
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_device(device_key, ts, sensor_key1 => 4.0)
+    client.write_device(device_key, ts, sensor_key2 => 2.0)
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    client.remoter.stub(:delete, "/v2/devices/#{device_key}/sensors/#{sensor_key1}/datapoints", 200, JSON.dump(:deleted => 1))
+
+    start = Time.utc(2011, 1, 1)
+    stop = Time.utc(2013, 1, 1)
+    summary = client.delete_datapoints(device_key, sensor_key1, start, stop)
+
+    assert_equal(1, summary.deleted)
+
+    stubbed_after_delete = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_after_delete))
+
+    rows = client.read(selection, start, stop).to_a
+    assert_nil(nil, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_delete_datapoints_nonexistent_device
+    client = get_client
+    device_key = "not_found"
+    sensor_key = "also_not_found"
+
+    client.remoter.stub(:delete, "/v2/devices/#{device_key}/sensors/#{sensor_key}/datapoints", 404)
+
+    start = Time.utc(2011, 1, 1)
+    stop = Time.utc(2013, 1, 1)
+    assert_raise TempoIQ::HttpException do
+      client.delete_datapoints(device_key, sensor_key, start, stop)
+    end
+  end
+
   private
 
   def create_device
