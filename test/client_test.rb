@@ -1,6 +1,8 @@
 require 'tempoiq/client'
 
 module ClientTest
+  TEMPO_TEST_ATTR = 'tempoiq-ruby-test-device'
+
   def setup
     delete_devices
   end
@@ -22,16 +24,16 @@ module ClientTest
     stubbed_body = {
       'key' => 'stubbed_key',
       'name' => 'stubbed_name',
-      'attributes' => {'attr1' => 'value1', 'tempoiq-ruby-test-device' => 'tempoiq-ruby-test-device'},
+      'attributes' => {'attr1' => 'value1', TEMPO_TEST_ATTR => TEMPO_TEST_ATTR},
       'sensors' => []
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
 
-    device = client.create_device('stubbed_key', 'stubbed_name', 'attr1' => 'value1', 'tempoiq-ruby-test-device' => 'tempoiq-ruby-test-device')
+    device = client.create_device('stubbed_key', 'stubbed_name', 'attr1' => 'value1', TEMPO_TEST_ATTR => TEMPO_TEST_ATTR)
 
     assert_equal('stubbed_key', device.key)
     assert_equal('stubbed_name', device.name)
-    assert_equal({'attr1' => 'value1', 'tempoiq-ruby-test-device' => 'tempoiq-ruby-test-device' }, device.attributes)
+    assert_equal({'attr1' => 'value1', TEMPO_TEST_ATTR => TEMPO_TEST_ATTR }, device.attributes)
     assert_equal([], device.sensors)
   end
 
@@ -486,7 +488,7 @@ module ClientTest
     stubbed_body = {
       'key' => 'device1',
       'name' => 'My Awesome Device',
-      'attributes' => {'tempoiq-ruby-test-device' => 'tempoiq-ruby-test-device', 'building' => '1234'},
+      'attributes' => {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
       'sensors' => [
                     {
                       'key' => 'sensor1',
@@ -505,7 +507,7 @@ module ClientTest
                    ]
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
-    client.create_device('device1', 'My Awesome Device', {'tempoiq-ruby-test-device' => 'tempoiq-ruby-test-device', 'building' => '1234'},
+    client.create_device('device1', 'My Awesome Device', {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
                          TempoIQ::Sensor.new('sensor1', 'My Sensor', 'unit' => 'F'),
                          TempoIQ::Sensor.new('sensor2', 'My Sensor2', 'unit' => 'C'))
   end
@@ -517,6 +519,6 @@ module ClientTest
     }
 
     client.remoter.stub(:delete, "/v2/devices", 200, JSON.dump(stubbed_body))
-    summary = client.delete_devices(:devices => {:attribute_key => 'tempoiq-ruby-test-device'})
+    summary = client.delete_devices(:devices => {:attribute_key => TEMPO_TEST_ATTR})
   end
 end
