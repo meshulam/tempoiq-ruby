@@ -330,13 +330,13 @@ module TempoIQ
     #    rows.each do |row|
     #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
     #    end
-    def read(selection, start, stop, pipeline = Pipeline.new, &block)
+    def read(selection, start, stop, pipeline = Pipeline.new, opts = {}, &block)
       if block_given?
         yield pipeline
       end
 
       query = Query.new(Search.new("devices", selection),
-                        Read.new(start, stop),
+                        Read.new(start, stop, opts[:limit]),
                         pipeline)
 
       Cursor.new(Row, remoter, "/v2/read", query)

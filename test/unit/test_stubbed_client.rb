@@ -9,7 +9,7 @@ class TestStubbedClient < Test::Unit::TestCase
 
   private
 
-  def get_client
-    TempoIQ::Client.new("key", "secret", "backend.tempoiq.com", 8080, :remoter => TempoIQ::StubbedRemoter.new)
+  def get_client(pop_stubs = false)
+    TempoIQ::Client.new("key", "secret", "backend.tempoiq.com", 8080, :remoter => TempoIQ::StubbedRemoter.new(pop_stubs))
   end
 end

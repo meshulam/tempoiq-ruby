@@ -370,6 +370,78 @@ module ClientTest
     assert_equal(2.0, rows[0].value(device.key, sensor_key2))
   end
 
+  def test_read_cursoring
+    device = create_device
+    client = get_client(true)
+    start = Time.utc(2012, 1, 1)
+    stop = Time.utc(2012, 1, 2)
+
+    ts = Time.utc(2012, 1, 1, 1)
+    ts2 = Time.utc(2012, 1, 1, 2)
+
+    device_key = device.key
+    sensor_key1 = device.sensors[0].key
+    sensor_key2 = device.sensors[1].key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    assert_equal(true, client.write_device(device_key, ts, sensor_key1 => 4.0, sensor_key2 => 2.0))
+    assert_equal(true, client.write_device(device_key, ts2, sensor_key1 => 4.0, sensor_key2 => 2.0))
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    next_query = {
+      "search" => {
+        "select" => "devices",
+        "filters" => {"devices" => "all"}
+      },
+      "read" => {
+        "start" => ts.iso8601(3),
+        "stop" => stop.iso8601(3)
+      },
+      "fold" => {
+        "functions" => []
+      }
+    }
+
+    stubbed_read = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ],
+      "next_page" => {
+        "next_query" => next_query
+      }
+    }
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
+
+    next_read = stubbed_read
+    next_read.delete("next_page")
+    next_read["data"][0]["t"] = ts2.iso8601(3)
+
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(next_read))
+
+    rows = client.read(selection, start, stop, TempoIQ::Pipeline.new, :limit => 1).to_a
+
+    assert_equal(2, rows.size)
+
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+
+    assert_equal(4.0, rows[1].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[1].value(device.key, sensor_key2))
+  end
+
   def test_delete_device
     device = create_device
     client = get_client
