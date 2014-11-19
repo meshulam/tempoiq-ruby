@@ -22,6 +22,8 @@ module TempoIQ
   class ClientError < StandardError
   end
 
+  MEDIA_PREFIX = "application/prs.tempoiq"
+
   # TempoIQ::Client is the main interface to your TempoIQ backend.
   # 
   # The client is broken down into two main sections:
@@ -339,7 +341,7 @@ module TempoIQ
                         Read.new(start, stop, opts[:limit]),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/read", query)
+      Cursor.new(Row, remoter, "/v2/read", query, media_type("datapoint-collection", "v2"))
     end
 
     # Read the latest value from a set of Devices / Sensors, with an optional functional pipeline
@@ -428,6 +430,12 @@ module TempoIQ
         sub_key = row.values.map { |device_key, sensors| sensors.keys.first }.first || sensor_key
         DataPoint.new(row.ts, row.value(device_key, sub_key))
       end
+    end
+
+    private
+
+    def media_type(media_resource, media_version, suffix = "json")
+      {"Accept" => "#{MEDIA_PREFIX}.#{media_resource}.#{media_version}+#{suffix}"}
     end
   end
 end

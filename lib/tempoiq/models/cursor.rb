@@ -13,15 +13,16 @@ module TempoIQ
     PAGE_LINK = "next_page"
     NEXT_QUERY = "next_query"
 
-    attr_reader :remoter, :route, :query, :segment_key
+    attr_reader :remoter, :route, :query, :headers, :segment_key
 
     include Enumerable
 
-    def initialize(klass, remoter, route, query, segment_key = "data")
+    def initialize(klass, remoter, route, query, headers = {}, segment_key = "data")
       @klass = klass
       @remoter = remoter
       @route = route
       @query = query
+      @headers = headers
       @segment_key = segment_key
     end
 
@@ -39,7 +40,7 @@ module TempoIQ
     private
 
     def get_segment(next_query)
-      remoter.get(route, next_query).on_success do |result|
+      remoter.get(route, next_query, headers).on_success do |result|
         JSON.parse(result.body)
       end
     end
