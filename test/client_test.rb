@@ -99,6 +99,39 @@ module ClientTest
     assert_equal(device.key, found.to_a.first.key)
   end
 
+  def test_cursored_list_devices
+    device = create_device("device-cursored-1")
+    device2 = create_device("device-cursored-2")
+    client = get_client(true)
+
+    next_query = {
+      "search" => {
+        "select" => "devices",
+        "filters" => {"devices" => {"attribute_key" => TEMPO_TEST_ATTR}}
+      },
+      "find" => {
+        "quantifier" => "all"
+      },
+    }
+
+    stubbed_body = {
+      "data" => [device.to_hash],
+      "next_page" => {
+        "next_query" => next_query
+      }
+    }
+    client.remoter.stub(:get, "/v2/devices", 200, JSON.dump(stubbed_body))
+
+    next_list = stubbed_body
+    next_list.delete("next_page")
+    next_list["data"][0] = device2.to_hash
+
+    client.remoter.stub(:get, "/v2/devices", 200, JSON.dump(next_list))
+
+    found = client.list_devices({:devices => {:attribute_key => TEMPO_TEST_ATTR}}, :limit => 1)
+    assert_equal(2, found.to_a.size)
+  end
+
   def test_write_bulk
     device = create_device
     client = get_client
@@ -555,10 +588,10 @@ module ClientTest
 
   private
 
-  def create_device
+  def create_device(key = "device1")
     client = get_client
     stubbed_body = {
-      'key' => 'device1',
+      'key' => key,
       'name' => 'My Awesome Device',
       'attributes' => {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
       'sensors' => [
@@ -579,7 +612,7 @@ module ClientTest
                    ]
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
-    client.create_device('device1', 'My Awesome Device', {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
+    client.create_device(key, 'My Awesome Device', {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
                          TempoIQ::Sensor.new('sensor1', 'My Sensor', 'unit' => 'F'),
                          TempoIQ::Sensor.new('sensor2', 'My Sensor2', 'unit' => 'C'))
   end

@@ -144,11 +144,11 @@ module TempoIQ
     # ==== Example
     #    # Select devices in building in the Evanston region
     #    client.list_devices(:devices => {:and => [{:attribute_key => 'building'}, {:attributes => {'region' => 'Evanston'}}]})
-    def list_devices(selection = {:devices => "all"})
+    def list_devices(selection = {:devices => "all"}, opts = {})
       query = Query.new(Search.new("devices", selection),
-                        Find.new,
+                        Find.new(opts[:limit]),
                         nil)
-      Cursor.new(Device, remoter, "/v2/devices", query)
+      Cursor.new(Device, remoter, "/v2/devices", query, media_type("device-collection", "v2"))
     end
 
     # Delete a device by key
