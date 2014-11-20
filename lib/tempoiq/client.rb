@@ -148,7 +148,8 @@ module TempoIQ
       query = Query.new(Search.new("devices", selection),
                         Find.new(opts[:limit]),
                         nil)
-      Cursor.new(Device, remoter, "/v2/devices", query, media_type("device-collection", "v2"))
+      Cursor.new(Device, remoter, "/v2/devices", query, media_types(:accept => [media_type("error", "v1"), media_type("device-collection", "v2")],
+                                                                    :content => media_type("query", "v1")))
     end
 
     # Delete a device by key
@@ -341,7 +342,8 @@ module TempoIQ
                         Read.new(start, stop, opts[:limit]),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/read", query, media_type("datapoint-collection", "v2"))
+      Cursor.new(Row, remoter, "/v2/read", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v2")],
+                                                              :content => media_type("query", "v1")))
     end
 
     # Read the latest value from a set of Devices / Sensors, with an optional functional pipeline
@@ -434,8 +436,15 @@ module TempoIQ
 
     private
 
+    def media_types(types)
+      {
+        "Accept" => types[:accept],
+        "Content-Type" => types[:content]
+      }
+    end
+
     def media_type(media_resource, media_version, suffix = "json")
-      {"Accept" => "#{MEDIA_PREFIX}.#{media_resource}.#{media_version}+#{suffix}"}
+      "#{MEDIA_PREFIX}.#{media_resource}.#{media_version}+#{suffix}"
     end
   end
 end
