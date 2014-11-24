@@ -28,25 +28,25 @@ module TempoIQ
 
     def get(route, body = nil, headers = {})
       execute_http(:get, build_uri(route),
-                   :headers => BASE_HEADERS.merge(headers),
+                   :header => BASE_HEADERS.merge(headers),
                    :body => body)
     end
 
     def post(route, body = nil, headers = {})
       execute_http(:post, build_uri(route),
-                   :headers => BASE_HEADERS.merge(headers),
+                   :header => BASE_HEADERS.merge(headers),
                    :body => body)
     end
 
     def put(route, body = nil, headers = {})
       execute_http(:put, build_uri(route),
-                   :headers => BASE_HEADERS.merge(headers),
+                   :header => BASE_HEADERS.merge(headers),
                    :body => body)
     end
 
     def delete(route, body = nil, headers = {})
       execute_http(:delete, build_uri(route),
-                   :headers => BASE_HEADERS.merge(headers),
+                   :header => BASE_HEADERS.merge(headers),
                    :body => body)
     end
 

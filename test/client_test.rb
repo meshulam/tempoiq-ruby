@@ -99,6 +99,39 @@ module ClientTest
     assert_equal(device.key, found.to_a.first.key)
   end
 
+  def test_cursored_list_devices
+    device = create_device("device-cursored-1")
+    device2 = create_device("device-cursored-2")
+    client = get_client(true)
+
+    next_query = {
+      "search" => {
+        "select" => "devices",
+        "filters" => {"devices" => {"attribute_key" => TEMPO_TEST_ATTR}}
+      },
+      "find" => {
+        "quantifier" => "all"
+      },
+    }
+
+    stubbed_body = {
+      "data" => [device.to_hash],
+      "next_page" => {
+        "next_query" => next_query
+      }
+    }
+    client.remoter.stub(:get, "/v2/devices", 200, JSON.dump(stubbed_body))
+
+    next_list = stubbed_body
+    next_list.delete("next_page")
+    next_list["data"][0] = device2.to_hash
+
+    client.remoter.stub(:get, "/v2/devices", 200, JSON.dump(next_list))
+
+    found = client.list_devices({:devices => {:attribute_key => TEMPO_TEST_ATTR}}, :limit => 1)
+    assert_equal(2, found.to_a.size)
+  end
+
   def test_write_bulk
     device = create_device
     client = get_client
@@ -370,6 +403,78 @@ module ClientTest
     assert_equal(2.0, rows[0].value(device.key, sensor_key2))
   end
 
+  def test_read_cursoring
+    device = create_device
+    client = get_client(true)
+    start = Time.utc(2012, 1, 1)
+    stop = Time.utc(2012, 1, 2)
+
+    ts = Time.utc(2012, 1, 1, 1)
+    ts2 = Time.utc(2012, 1, 1, 2)
+
+    device_key = device.key
+    sensor_key1 = device.sensors[0].key
+    sensor_key2 = device.sensors[1].key
+
+    client.remoter.stub(:post, "/v2/write", 200)
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    assert_equal(true, client.write_device(device_key, ts, sensor_key1 => 4.0, sensor_key2 => 2.0))
+    assert_equal(true, client.write_device(device_key, ts2, sensor_key1 => 4.0, sensor_key2 => 2.0))
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    next_query = {
+      "search" => {
+        "select" => "devices",
+        "filters" => {"devices" => "all"}
+      },
+      "read" => {
+        "start" => ts.iso8601(3),
+        "stop" => stop.iso8601(3)
+      },
+      "fold" => {
+        "functions" => []
+      }
+    }
+
+    stubbed_read = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ],
+      "next_page" => {
+        "next_query" => next_query
+      }
+    }
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
+
+    next_read = stubbed_read
+    next_read.delete("next_page")
+    next_read["data"][0]["t"] = ts2.iso8601(3)
+
+    client.remoter.stub(:get, "/v2/read", 200, JSON.dump(next_read))
+
+    rows = client.read(selection, start, stop, TempoIQ::Pipeline.new, :limit => 1).to_a
+
+    assert_equal(2, rows.size)
+
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+
+    assert_equal(4.0, rows[1].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[1].value(device.key, sensor_key2))
+  end
+
   def test_delete_device
     device = create_device
     client = get_client
@@ -483,10 +588,10 @@ module ClientTest
 
   private
 
-  def create_device
+  def create_device(key = "device1")
     client = get_client
     stubbed_body = {
-      'key' => 'device1',
+      'key' => key,
       'name' => 'My Awesome Device',
       'attributes' => {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
       'sensors' => [
@@ -507,7 +612,7 @@ module ClientTest
                    ]
     }
     client.remoter.stub(:post, "/v2/devices", 200, JSON.dump(stubbed_body))
-    client.create_device('device1', 'My Awesome Device', {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
+    client.create_device(key, 'My Awesome Device', {TEMPO_TEST_ATTR => TEMPO_TEST_ATTR, 'building' => '1234'},
                          TempoIQ::Sensor.new('sensor1', 'My Sensor', 'unit' => 'F'),
                          TempoIQ::Sensor.new('sensor2', 'My Sensor2', 'unit' => 'C'))
   end

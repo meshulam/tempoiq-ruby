@@ -22,6 +22,8 @@ module TempoIQ
   class ClientError < StandardError
   end
 
+  MEDIA_PREFIX = "application/prs.tempoiq"
+
   # TempoIQ::Client is the main interface to your TempoIQ backend.
   # 
   # The client is broken down into two main sections:
@@ -142,11 +144,12 @@ module TempoIQ
     # ==== Example
     #    # Select devices in building in the Evanston region
     #    client.list_devices(:devices => {:and => [{:attribute_key => 'building'}, {:attributes => {'region' => 'Evanston'}}]})
-    def list_devices(selection = {:devices => "all"})
+    def list_devices(selection = {:devices => "all"}, opts = {})
       query = Query.new(Search.new("devices", selection),
-                        Find.new,
+                        Find.new(opts[:limit]),
                         nil)
-      Cursor.new(Device, remoter, "/v2/devices", query)
+      Cursor.new(Device, remoter, "/v2/devices", query, media_types(:accept => [media_type("error", "v1"), media_type("device-collection", "v2")],
+                                                                    :content => media_type("query", "v1")))
     end
 
     # Delete a device by key
@@ -330,16 +333,17 @@ module TempoIQ
     #    rows.each do |row|
     #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
     #    end
-    def read(selection, start, stop, pipeline = Pipeline.new, &block)
+    def read(selection, start, stop, pipeline = Pipeline.new, opts = {}, &block)
       if block_given?
         yield pipeline
       end
 
       query = Query.new(Search.new("devices", selection),
-                        Read.new(start, stop),
+                        Read.new(start, stop, opts[:limit]),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/read", query)
+      Cursor.new(Row, remoter, "/v2/read", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v2")],
+                                                              :content => media_type("query", "v1")))
     end
 
     # Read the latest value from a set of Devices / Sensors, with an optional functional pipeline
@@ -428,6 +432,19 @@ module TempoIQ
         sub_key = row.values.map { |device_key, sensors| sensors.keys.first }.first || sensor_key
         DataPoint.new(row.ts, row.value(device_key, sub_key))
       end
+    end
+
+    private
+
+    def media_types(types)
+      {
+        "Accept" => types[:accept],
+        "Content-Type" => types[:content]
+      }
+    end
+
+    def media_type(media_resource, media_version, suffix = "json")
+      "#{MEDIA_PREFIX}.#{media_resource}.#{media_version}+#{suffix}"
     end
   end
 end

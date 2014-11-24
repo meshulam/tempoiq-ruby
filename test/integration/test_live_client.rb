@@ -10,7 +10,7 @@ class TestLiveClient < Test::Unit::TestCase
 
   private
 
-  def get_client
+  def get_client(not_used = nil)
     file = File.read(File.join(File.dirname(__FILE__), "integration-credentials.yml"))
     creds = YAML.load(file)
     TempoIQ::Client.new(creds["key"], creds["secret"], creds["hostname"], creds["port"],

@@ -10,30 +10,38 @@ module TempoIQ
   # such as Enumerable#to_a are available if you know you're working with a 
   # small enough segment of data that can reasonably fit in memory.
   class Cursor
-    attr_reader :remoter, :route, :query, :segment_key
+    PAGE_LINK = "next_page"
+    NEXT_QUERY = "next_query"
+
+    attr_reader :remoter, :route, :query, :headers, :segment_key
 
     include Enumerable
 
-    def initialize(klass, remoter, route, query, segment_key = "data")
+    def initialize(klass, remoter, route, query, headers = {}, segment_key = "data")
       @klass = klass
       @remoter = remoter
       @route = route
       @query = query
+      @headers = headers
       @segment_key = segment_key
-      @segment = nil
     end
 
     def each
-      get_segment! if @segment.nil?
-      @segment.each { |item| yield @klass.from_hash(item) }
+      segment = nil
+      until segment == nil && query == nil do
+        json = get_segment(JSON.dump(query.to_hash))
+        segment = json[segment_key]
+        segment.each { |item| yield @klass.from_hash(item) }
+        segment = nil
+        @query = json.fetch(PAGE_LINK, {})[NEXT_QUERY]
+      end
     end
 
     private
 
-    def get_segment!
-      remoter.get(route, JSON.dump(query.to_hash)).on_success do |result|
-        json = JSON.parse(result.body)
-        @segment = json[segment_key]
+    def get_segment(next_query)
+      remoter.get(route, next_query, headers).on_success do |result|
+        JSON.parse(result.body)
       end
     end
   end
