@@ -3,14 +3,17 @@ module TempoIQ
     attr_reader :name
     attr_accessor :include_selection
 
-    def initialize(include_selection = false)
+    def initialize(function, timestamp = nil, include_selection = false)
       @name = "single"
       @include_selection = include_selection
+      @function = function
     end
 
     def to_hash
       {
-        "include_selection" => include_selection
+        "function" => @function,
+        "timestamp" => @timestamp,
+        "include_selection" => @include_selection
       }
     end
   end
