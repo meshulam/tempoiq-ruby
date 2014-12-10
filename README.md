@@ -4,7 +4,7 @@
 
 ```
 gem build tempoiq.gemspec
-gem install tempoiq-0.0.1.gem
+gem install tempoiq-<version>.gem
 ```
 
 ## Quickstart
