@@ -404,8 +404,8 @@ module TempoIQ
                         Single.new(function, timestamp),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v2")],
-                                                              :content => media_type("query", "v1")))
+      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v1")],
+                                                                :content => media_type("query", "v1")))
     end
 
     # Delete datapoints by device and sensor key, start and stop date
