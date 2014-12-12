@@ -442,15 +442,15 @@ module ClientTest
 
     stubbed_read = {
       "data" => [
-                 {
+                  {
                    "t" => ts.iso8601(3),
                    "data" => {
-                     device_key => {
-                       sensor_key1 => 4.0,
-                       sensor_key2 => 2.0
-                     }
-                   }
-                 }
+                        device_key => {
+                        sensor_key1 => 4.0,
+                        sensor_key2 => 2.0
+                      }
+                    }
+                  }
                 ],
       "next_page" => {
         "next_query" => next_query
@@ -512,14 +512,235 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
     }
 
     rows = client.latest(selection).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_earliest
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts = Time.utc(2012, 1, 1)
+
+    stubbed_single = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    rows = client.single(selection, :earliest).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_nearest
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts_before = Time.utc(2011, 6, 1)
+    ts_after = Time.utc(2013, 1, 1)
+    ts_nearest = Time.utc(2012, 1, 1)
+
+    stubbed_single = {
+      "data" => [
+                 {
+                   "t" => ts_before.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts_before, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts_before, 2.0))
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts_after, 3.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts_after, 1.0))
+    end
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    rows = client.single(selection, :nearest, ts_nearest).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_before
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts = Time.utc(2012, 1, 1)
+
+    stubbed_single = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    rows = client.single(selection, :before, ts).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_exact
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts = Time.utc(2012, 1, 1)
+
+    stubbed_single = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    rows = client.single(selection, :exact, ts).to_a
+
+    assert_equal(1, rows.size)
+    assert_equal(4.0, rows[0].value(device.key, sensor_key1))
+    assert_equal(2.0, rows[0].value(device.key, sensor_key2))
+  end
+
+  def test_after
+    device = create_device
+    client = get_client
+
+    device_key = device.key
+    sensor_key1 = device.sensors.first.key
+    sensor_key2 = device.sensors[1].key
+
+    ts = Time.utc(2012, 1, 2)
+
+    stubbed_single = {
+      "data" => [
+                 {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                     device_key => {
+                       sensor_key1 => 4.0,
+                       sensor_key2 => 2.0
+                     }
+                   }
+                 }
+                ]
+    }
+
+    client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
+    client.remoter.stub(:post, "/v2/write", 200)
+
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
+
+    selection = {
+      :devices => {:key => device_key}
+    }
+
+    rows = client.single(selection, :after, Time.utc(2011, 1, 1)).to_a
 
     assert_equal(1, rows.size)
     assert_equal(4.0, rows[0].value(device.key, sensor_key1))
@@ -538,8 +759,10 @@ module ClientTest
 
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}

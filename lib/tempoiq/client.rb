@@ -346,7 +346,7 @@ module TempoIQ
                                                               :content => media_type("query", "v1")))
     end
 
-    # Read the latest value from a set of Devices / Sensors, with an optional functional pipeline
+    # Read the latest point from a set of Devices / Sensors, with an optional functional pipeline
     # to transform the values.
     #
     # * +selection+ [Selection] - Device selection, describes which Devices / Sensors we should operate on
@@ -369,10 +369,48 @@ module TempoIQ
       end
 
       query = Query.new(Search.new("devices", selection),
-                        Single.new(false),
+                        Single.new(:latest),
                         pipeline)
 
       Cursor.new(Row, remoter, "/v2/single", query)
+    end
+
+    # Read a single point from a set of Devices / Sensors, with an optional functional pipeline
+    # to transform the values.
+    #
+    # * +selection+ [Selection] - Device selection, describes which Devices / Sensors we should operate on
+    # * +function+ [Symbol] - The type of single point query to perform. One of:
+    #   * :earliest - get the earliest points from the selection
+    #   * :latest - get the latest points from the selection
+    #   * :before - get the nearest points before the timestamp
+    #   * :after - get the nearest points after the timestamp
+    #   * :exact - get the points exactly at the timestamp if any
+    #   * :nearest - get the nearest points to the timestamp
+    # * +timestamp+ [Time] (optional)- Time, if any to apply the function to. Not necessary for earliest or latest.
+    # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints. 
+    #
+    # On success:
+    # - Return a Cursor of Row objects with only one Row inside
+    # On failure:
+    # - Raise an HttpException
+    #
+    # ==== Example
+    #    # Find the last DataPoint from Device 'bulding4567' Sensor 'temp1' before January 1, 2013
+    #    rows = client.single({:devices => {:key => 'building4567'}, :sensors => {:key => 'temp1'}}, :before, Time.utc(2013, 1, 1))
+    #    rows.each do |row|
+    #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
+    #    end
+    def single(selection, function, timestamp = nil, pipeline = Pipeline.new, &block)
+      if block_given?
+        yield pipeline
+      end
+
+      query = Query.new(Search.new("devices", selection),
+                        Single.new(function, timestamp),
+                        pipeline)
+
+      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v1")],
+                                                                :content => media_type("query", "v1")))
     end
 
     # Delete datapoints by device and sensor key, start and stop date
