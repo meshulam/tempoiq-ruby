@@ -512,8 +512,10 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
@@ -553,8 +555,10 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
@@ -596,10 +600,12 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts_before, sensor_key1 => 4.0)
-    client.write_device(device_key, ts_before, sensor_key2 => 2.0)
-    client.write_device(device_key, ts_after, sensor_key1 => 3.0)
-    client.write_device(device_key, ts_after, sensor_key2 => 1.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts_before, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts_before, 2.0))
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts_after, 3.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts_after, 1.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
@@ -639,8 +645,10 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
@@ -680,8 +688,10 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
@@ -721,8 +731,10 @@ module ClientTest
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
@@ -747,8 +759,10 @@ module ClientTest
 
     client.remoter.stub(:post, "/v2/write", 200)
 
-    client.write_device(device_key, ts, sensor_key1 => 4.0)
-    client.write_device(device_key, ts, sensor_key2 => 2.0)
+    client.write_bulk do |write|
+      write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
+      write.add(device_key, sensor_key2, TempoIQ::DataPoint.new(ts, 2.0))
+    end
 
     selection = {
       :devices => {:key => device_key}
