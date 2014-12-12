@@ -16,7 +16,6 @@ require 'tempoiq/models/row'
 require 'tempoiq/models/search'
 require 'tempoiq/models/selection'
 require 'tempoiq/models/single'
-require 'tempoiq/models/direction_function'
 require 'tempoiq/remoter/live_remoter'
 
 module TempoIQ
@@ -370,7 +369,7 @@ module TempoIQ
       end
 
       query = Query.new(Search.new("devices", selection),
-                        Single.new(DirectionFunction::LATEST),
+                        Single.new(:latest),
                         pipeline)
 
       Cursor.new(Row, remoter, "/v2/single", query)
@@ -380,9 +379,15 @@ module TempoIQ
     # to transform the values.
     #
     # * +selection+ [Selection] - Device selection, describes which Devices / Sensors we should operate on
-    # * +function+ [DirectionFunction] - Function to determine which point is returned. Can be earliest or latest (no timestamp required), exact (only returns exact matches), before, after, or nearest point.
+    # * +function+ [Symbol] - The type of single point query to perform. One of:
+    #   * :earliest - get the earliest points from the selection
+    #   * :latest - get the latest points from the selection
+    #   * :before - get the nearest points before the timestamp
+    #   * :after - get the nearest points after the timestamp
+    #   * :exact - get the points exactly at the timestamp if any
+    #   * :nearest - get the nearest points to the timestamp
     # * +timestamp+ [Time] (optional)- Time, if any to apply the function to. Not necessary for earliest or latest.
-    # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints.
+    # * +pipeline+ [Pipeline] (optional)- Functional pipeline transformation. Supports analytic computation on a stream of DataPoints. 
     #
     # On success:
     # - Return a Cursor of Row objects with only one Row inside
@@ -391,7 +396,7 @@ module TempoIQ
     #
     # ==== Example
     #    # Find the last DataPoint from Device 'bulding4567' Sensor 'temp1' before January 1, 2013
-    #    rows = client.single({:devices => {:key => 'building4567'}, :sensors => {:key => 'temp1'}}, DirectionFunction::BEFORE, Time.utc(2013, 1, 1))
+    #    rows = client.single({:devices => {:key => 'building4567'}, :sensors => {:key => 'temp1'}}, :before, Time.utc(2013, 1, 1))
     #    rows.each do |row|
     #      puts "Data at timestamp: #{row.ts}, value: #{row.value('building4567', 'temp1')}"
     #    end

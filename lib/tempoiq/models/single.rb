@@ -12,7 +12,7 @@ module TempoIQ
 
     def to_hash
       hash = {
-        "function" => function,
+        "function" => function.to_s,
         "include_selection" => include_selection
       }
       hash["timestamp"] = timestamp.iso8601(3) if timestamp
