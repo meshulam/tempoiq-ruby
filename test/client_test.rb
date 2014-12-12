@@ -106,19 +106,19 @@ module ClientTest
 
     next_query = {
       "search" => {
-      "select" => "devices",
-      "filters" => {"devices" => {"attribute_key" => TEMPO_TEST_ATTR}}
-    },
+        "select" => "devices",
+        "filters" => {"devices" => {"attribute_key" => TEMPO_TEST_ATTR}}
+      },
       "find" => {
-      "quantifier" => "all"
-    },
+        "quantifier" => "all"
+      },
     }
 
     stubbed_body = {
       "data" => [device.to_hash],
       "next_page" => {
-      "next_query" => next_query
-    }
+        "next_query" => next_query
+      }
     }
     client.remoter.stub(:get, "/v2/devices", 200, JSON.dump(stubbed_body))
 
@@ -428,33 +428,33 @@ module ClientTest
 
     next_query = {
       "search" => {
-      "select" => "devices",
-      "filters" => {"devices" => "all"}
-    },
+        "select" => "devices",
+        "filters" => {"devices" => "all"}
+      },
       "read" => {
-      "start" => ts.iso8601(3),
-      "stop" => stop.iso8601(3)
-    },
+        "start" => ts.iso8601(3),
+        "stop" => stop.iso8601(3)
+      },
       "fold" => {
-      "functions" => []
-    }
+        "functions" => []
+      }
     }
 
     stubbed_read = {
       "data" => [
-        {
-      "t" => ts.iso8601(3),
-      "data" => {
-      device_key => {
-      sensor_key1 => 4.0,
-      sensor_key2 => 2.0
-    }
-    }
-    }
-    ],
+                  {
+                   "t" => ts.iso8601(3),
+                   "data" => {
+                        device_key => {
+                        sensor_key1 => 4.0,
+                        sensor_key2 => 2.0
+                      }
+                    }
+                  }
+                ],
       "next_page" => {
-      "next_query" => next_query
-    }
+        "next_query" => next_query
+      }
     }
     client.remoter.stub(:get, "/v2/read", 200, JSON.dump(stubbed_read))
 
@@ -560,7 +560,7 @@ module ClientTest
       :devices => {:key => device_key}
     }
 
-    rows = client.single(selection, TempoIQ::DirectionFunction::EARLIEST).to_a
+    rows = client.single(selection, :earliest).to_a
 
     assert_equal(1, rows.size)
     assert_equal(4.0, rows[0].value(device.key, sensor_key1))
@@ -605,7 +605,7 @@ module ClientTest
       :devices => {:key => device_key}
     }
 
-    rows = client.single(selection, TempoIQ::DirectionFunction::NEAREST, ts_nearest).to_a
+    rows = client.single(selection, :nearest, ts_nearest).to_a
 
     assert_equal(1, rows.size)
     assert_equal(4.0, rows[0].value(device.key, sensor_key1))
@@ -646,7 +646,7 @@ module ClientTest
       :devices => {:key => device_key}
     }
 
-    rows = client.single(selection, TempoIQ::DirectionFunction::BEFORE, ts).to_a
+    rows = client.single(selection, :before, ts).to_a
 
     assert_equal(1, rows.size)
     assert_equal(4.0, rows[0].value(device.key, sensor_key1))
@@ -687,7 +687,7 @@ module ClientTest
       :devices => {:key => device_key}
     }
 
-    rows = client.single(selection, TempoIQ::DirectionFunction::EXACT, ts).to_a
+    rows = client.single(selection, :exact, ts).to_a
 
     assert_equal(1, rows.size)
     assert_equal(4.0, rows[0].value(device.key, sensor_key1))
@@ -728,7 +728,7 @@ module ClientTest
       :devices => {:key => device_key}
     }
 
-    rows = client.single(selection, TempoIQ::DirectionFunction::AFTER, Time.utc(2011, 1, 1)).to_a
+    rows = client.single(selection, :after, Time.utc(2011, 1, 1)).to_a
 
     assert_equal(1, rows.size)
     assert_equal(4.0, rows[0].value(device.key, sensor_key1))
