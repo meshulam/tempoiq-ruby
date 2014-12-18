@@ -33,3 +33,4 @@ edit `test/integration/integration-credentials.yml`, and run:
 ```
 rake test:integration
 ```
+
