@@ -1,11 +1,18 @@
-# TempoIQ HTTP Ruby Client
+# TempoIQ Ruby Library
 
 ## Installation
 
-```
-gem build tempoiq.gemspec
-gem install tempoiq-<version>.gem
-```
+The TempoIQ Ruby library makes calls to the [TempoIQ API](https://tempoiq.com/). The module is available on rubygems.org as [tempoiq](https://rubygems.org/gems/tempoiq):
+
+    gem install tempoiq
+
+You can also check out this repository and install locally:
+
+    git clone https://github.com/TempoIQ/tempoiq-ruby.git
+    cd tempoiq-ruby/
+    gem build tempoiq.gemspec
+    gem install tempoiq-<version>.gem
+
 
 ## Quickstart
 
