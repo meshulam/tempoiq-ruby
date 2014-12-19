@@ -1,4 +1,4 @@
-# TempoIQ Ruby library
+# TempoIQ Ruby Library
 
 ## Installation
 
