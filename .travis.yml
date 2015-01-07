@@ -1,0 +1,14 @@
+language: ruby
+rvm:
+  - 2.0.0
+  - 1.9.3
+notifications:
+  email:
+    - tech@tempoiq.com
+deploy:
+  provider: rubygems
+  api_key:
+    secure: kT0MGBghV93buLJqUKzIt+EbZ+3tX7kW0RFd6JRKCTR4A08wjQNY1ys3yzxXbNpy2RfGtpVE3VJC8oEx3w+wnwMC7HtFUSgTmcSh+qeLnX6hrl6255iWQSx6x5KcvsdY1B9IKgcau4iTa/2+1SALznx9bnGWAGyReoADfHiDSPs=
+  on:
+    tags: true
+    all_branches: true
