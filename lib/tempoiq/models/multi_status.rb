@@ -11,7 +11,12 @@ module TempoIQ
 
     # Was the request a total success?
     def success?
-      status.nil?
+      status.each do |key,device_status|
+        if device_status['successful'] == false
+          return false
+        end
+      end
+      true
     end
 
     # Did the request have partial failures?
@@ -21,7 +26,19 @@ module TempoIQ
 
     # Retrieve the failures, key => message [Hash]
     def failures
-      Hash[status.map { |device_key, v| [device_key, v["message"]] } ]
+      status.select { |device_key, v| v["successful"] == false }
+    end
+
+    def existing
+      status.select { |device_key, v| v["device_state"] == "existing" }
+    end
+
+    def created
+      status.select { |device_key, v| v["device_state"] == "created" }
+    end
+
+    def modified
+      status.select { |device_key, v| v["device_state"] == "modified" }
     end
   end
 end
