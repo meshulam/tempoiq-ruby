@@ -263,9 +263,7 @@ module TempoIQ
       end
 
       result = remoter.post("/v2/write", JSON.dump(bulk.to_hash))
-      if result.code == HttpResult::OK
-        MultiStatus.new
-      elsif result.code == HttpResult::MULTI
+      if result.code == HttpResult::OK || result.code == HttpResult::MULTI
         json = JSON.parse(result.body)
         MultiStatus.new(json)
       else
