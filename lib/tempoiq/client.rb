@@ -148,7 +148,7 @@ module TempoIQ
       query = Query.new(Search.new("devices", selection),
                         Find.new(opts[:limit]),
                         nil)
-      Cursor.new(Device, remoter, "/v2/devices", query, media_types(:accept => [media_type("error", "v1"), media_type("device-collection", "v2")],
+      Cursor.new(Device, remoter, "/v2/devices", query, media_types(:accept => [media_type("device-collection", "v2"), media_type("error", "v1")],
                                                                     :content => media_type("query", "v1")))
     end
 
@@ -341,7 +341,7 @@ module TempoIQ
                         Read.new(start, stop, opts[:limit]),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/read", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v2")],
+      Cursor.new(Row, remoter, "/v2/read", query, media_types(:accept => [media_type("datapoint-collection", "v2"), media_type("error", "v1")],
                                                               :content => media_type("query", "v1")))
     end
 
@@ -408,7 +408,7 @@ module TempoIQ
                         Single.new(function, timestamp),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v1")],
+      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("datapoint-collection", "v1"), media_type("error", "v1")],
                                                                 :content => media_type("query", "v1")))
     end
 
