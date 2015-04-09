@@ -7,6 +7,7 @@ notifications:
   - tech@tempoiq.com
 deploy:
   provider: rubygems
+  gem: tempoiq
   api_key:
     secure: Q+CJi5SFIl+H8gAFxJ9o6GOksnd08TnAJEevyioYnug4MJd+eNU4vR/6AEr2hhck2TuhiKoc3Mf3wuwnaO5Q0FrwzgN520oWoFeZiC3Z6JBXb+rVtGhqFh1dUdKTF04+P1qIZh5I01CM2aP+EIF2OV//aF8mZxNAqTTYV45cJ8k=
   on:
