@@ -8,7 +8,7 @@ require 'tempoiq/models/datapoint'
 require 'tempoiq/models/delete_summary'
 require 'tempoiq/models/device'
 require 'tempoiq/models/find'
-require 'tempoiq/models/multi_status'
+require 'tempoiq/models/write_response'
 require 'tempoiq/models/pipeline'
 require 'tempoiq/models/query'
 require 'tempoiq/models/read'
@@ -148,7 +148,7 @@ module TempoIQ
       query = Query.new(Search.new("devices", selection),
                         Find.new(opts[:limit]),
                         nil)
-      Cursor.new(Device, remoter, "/v2/devices", query, media_types(:accept => [media_type("error", "v1"), media_type("device-collection", "v2")],
+      Cursor.new(Device, remoter, "/v2/devices", query, media_types(:accept => [media_type("device-collection", "v2"), media_type("error", "v1")],
                                                                     :content => media_type("query", "v1")))
     end
 
@@ -233,9 +233,9 @@ module TempoIQ
     # * +bulk_write+ - The write request to send to the backend. Yielded to the block.
     #
     # On success:
-    # - Returns MultiStatus
+    # - Returns WriteResponse
     # On partial success:
-    # - Returns MultiStatus
+    # - Returns WriteResponse
     # On failure:
     # - Raises HttpException
     #
@@ -266,7 +266,7 @@ module TempoIQ
       if result.code == HttpResult::OK || result.code == HttpResult::MULTI
         body = result.body.empty? ? "{}" : result.body
         json = JSON.parse(body)
-        MultiStatus.new(json)
+        WriteResponse.new(json)
       else
         raise HttpException.new(result)
       end
@@ -341,7 +341,7 @@ module TempoIQ
                         Read.new(start, stop, opts[:limit]),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/read", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v2")],
+      Cursor.new(Row, remoter, "/v2/read", query, media_types(:accept => [media_type("datapoint-collection", "v2"), media_type("error", "v1")],
                                                               :content => media_type("query", "v1")))
     end
 
@@ -408,7 +408,7 @@ module TempoIQ
                         Single.new(function, timestamp),
                         pipeline)
 
-      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("error", "v1"), media_type("datapoint-collection", "v1")],
+      Cursor.new(Row, remoter, "/v2/single", query, media_types(:accept => [media_type("datapoint-collection", "v1"), media_type("error", "v1")],
                                                                 :content => media_type("query", "v1")))
     end
 
