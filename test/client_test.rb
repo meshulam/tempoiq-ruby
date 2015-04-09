@@ -140,7 +140,14 @@ module ClientTest
     device_key = device.key
     sensor_key = device.sensors.first.key
 
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     status = client.write_bulk do |write|
       write.add(device_key, sensor_key, TempoIQ::DataPoint.new(ts, 1.23))
@@ -158,25 +165,48 @@ module ClientTest
     end
   end
 
-  def test_write_with_partial_failure
-    device = create_device
+  def test_write_with_upsert
+    device1 = create_device
+    device2 = create_device(key="device2")
     client = get_client
     ts = Time.utc(2012, 1, 1)
 
-    device_key = device.key
-    sensor_key = device.sensors.first.key
+    device_key1 = device1.key
+    sensor_key = device1.sensors.first.key
+    device_key2 = device2.key
+    device_key3 = "device3"
 
-    stubbed_body = {"device1" => {"success" => false, "message" => "error writing to storage: FERR_NO_SENSOR: No sensor with key found in device."}}
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      },
+                    "device2" =>
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "modified"
+                      },
+                    "device3" =>
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "created"
+                      }
+                   }
     client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     status = client.write_bulk do |write|
-      write.add(device_key, sensor_key, TempoIQ::DataPoint.new(ts, 1.23))
-      write.add(device_key, "not_here", TempoIQ::DataPoint.new(ts, 2.34))
+      write.add(device_key1, sensor_key, TempoIQ::DataPoint.new(ts, 1.23))
+      write.add(device_key2, "not_here", TempoIQ::DataPoint.new(ts, 2.34))
+      write.add(device_key3, "not_here", TempoIQ::DataPoint.new(ts, 2.34))
     end
 
-    assert(!status.success?)
-    assert(status.partial_success?)
-    assert_equal(1, status.failures.size)
+    assert(status.success?)
+    assert_equal(1, status.existing.size)
+    assert_equal("device1", status.existing.keys.first)
+    assert_equal(1, status.modified.size)
+    assert_equal("device2", status.modified.keys.first)
+    assert_equal(1, status.created.size)
+    assert_equal("device3", status.created.keys.first)
   end
 
   def test_write_device
@@ -187,7 +217,14 @@ module ClientTest
     device_key = device.key
     sensor_key = device.sensors.first.key
 
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     written = client.write_device(device_key, ts, sensor_key => 1.23)
 
@@ -204,9 +241,16 @@ module ClientTest
     device_key = device.key
     sensor_key1 = device.sensors[0].key
     sensor_key2 = device.sensors[1].key
-    
-    client.remoter.stub(:post, "/v2/write", 200)
 
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
+    
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1), sensor_key1 => 4.0, sensor_key2 => 2.0)
     assert_equal(true, write_result)
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 2), sensor_key1 => 4.0, sensor_key2 => 2.0)
@@ -248,7 +292,14 @@ module ClientTest
     device_key = device.key
     sensor_key = device.sensors[0].key
 
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     write_result = client.write_device(device_key, Time.utc(2012, 1, 1, 1, 0, 5, 0), sensor_key => 4.0)
     assert_equal(true, write_result)
@@ -330,8 +381,14 @@ module ClientTest
 
     device_key = device.key
     sensor_key = device.sensors[0].key
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
 
-    client.remoter.stub(:post, "/v2/write", 200)
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     write_result = client.write_device(device_key, ts, sensor_key => 4.0)
     assert_equal(true, write_result)
@@ -372,7 +429,14 @@ module ClientTest
     sensor_key1 = device.sensors[0].key
     sensor_key2 = device.sensors[1].key
 
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     write_result = client.write_device(device_key, ts, sensor_key1 => 4.0, sensor_key2 => 2.0)
     assert_equal(true, write_result)
@@ -416,8 +480,15 @@ module ClientTest
     sensor_key1 = device.sensors[0].key
     sensor_key2 = device.sensors[1].key
 
-    client.remoter.stub(:post, "/v2/write", 200)
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     assert_equal(true, client.write_device(device_key, ts, sensor_key1 => 4.0, sensor_key2 => 2.0))
     assert_equal(true, client.write_device(device_key, ts2, sensor_key1 => 4.0, sensor_key2 => 2.0))
@@ -510,7 +581,14 @@ module ClientTest
     }
 
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
@@ -553,7 +631,14 @@ module ClientTest
     }
 
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
@@ -598,7 +683,14 @@ module ClientTest
     }
 
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts_before, 4.0))
@@ -643,7 +735,14 @@ module ClientTest
     }
 
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
@@ -686,7 +785,14 @@ module ClientTest
     }
 
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
@@ -729,7 +835,14 @@ module ClientTest
     }
 
     client.remoter.stub(:get, "/v2/single", 200, JSON.dump(stubbed_single))
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
@@ -757,7 +870,14 @@ module ClientTest
 
     ts = Time.utc(2012, 1, 1)
 
-    client.remoter.stub(:post, "/v2/write", 200)
+    stubbed_body = {"device1" => 
+                      {"success" => true, 
+                       "message" => nil,
+                       "device_state" => "existing"
+                      }
+                   }
+
+    client.remoter.stub(:post, "/v2/write", 207, JSON.dump(stubbed_body))
 
     client.write_bulk do |write|
       write.add(device_key, sensor_key1, TempoIQ::DataPoint.new(ts, 4.0))
@@ -847,6 +967,7 @@ module ClientTest
     }
 
     client.remoter.stub(:delete, "/v2/devices", 200, JSON.dump(stubbed_body))
-    summary = client.delete_devices(:devices => {:attribute_key => TEMPO_TEST_ATTR})
+    summary1 = client.delete_devices(:devices => {:attribute_key => TEMPO_TEST_ATTR})
+    summary2 = client.delete_devices(:devices => {:key => "device3"})
   end
 end
